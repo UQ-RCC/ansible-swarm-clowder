@@ -1,0 +1,563 @@
+---
+- name: data for es
+  file:
+    path: /mnt/es-data
+    state: directory
+    mode: '0755'
+- name: log for es
+  file:
+    path: /mnt/es-logs
+    state: directory
+    mode: '0755'
+- name: data for mongo
+  file:
+    path: /mnt/mongo-data
+    state: directory
+    mode: '0755'
+- name: config for mongo
+  file:
+    path: /mnt/mongo-configs
+    state: directory
+    mode: '0755'
+- name: traefik
+  file:
+    path: /mnt/traefik
+    state: directory
+    mode: '0755'
+- name: clowder
+  file:
+    path: /mnt/clowder
+    state: directory
+    mode: '0755'
+- name: rabbitmq
+  file:
+    path: /mnt/rabbitmq
+    state: directory
+    mode: '0755'
+- name: portainer dir
+  file:
+    path: /mnt/portainer
+    state: directory
+    mode: '0755'
+
+#### volumes for docker #############
+# - name: create 
+#   docker_volume:
+#     name: es-data
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/es-data/
+# - name: create es logs volumes
+#   docker_volume:
+#     name: es-logs
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/es-logs/
+# - name: create mongo db volumes
+#   docker_volume:
+#     name: mongo-data
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/mongo-data/
+# - name: create mongo config
+#   docker_volume:
+#     name: mongo-configs
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/mongo-configs/
+# - name: create traefik volume
+#   docker_volume:
+#     name: traefik_volume
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/traefik
+# - name: create clowder volume
+#   docker_volume:
+#     name: clowder_volume
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/clowder
+# - name: create q collections volume
+#   docker_volume:
+#     name: qcollections_volume
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /data  
+# - name: create rabbitmq volume
+#   docker_volume:
+#     name: rabbitmq_volume
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/rabbitmq
+# - name: create portainer volume
+#   docker_volume:
+#     name: portainer_volume
+#     driver: local
+#     driver_options:
+#       o: bind
+#       type: none
+#       device: /mnt/portainer
+
+####### copy configs ###########
+- name: copy custom.play.plugins
+  template:
+    src: "custom.play.plugins.j2"
+    dest: "/custom.play.plugins"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
+  when: inventory_hostname == groups['SwarmMaster'][0]
+- name: copy custom play plugsin without ppms 
+  template:
+    src: "custom.play.plugins.withoutppms.j2"
+    dest: "/custom.play.plugins"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
+  when: inventory_hostname != groups['SwarmMaster'][0]
+- name: copy custom.conf
+  template:
+    src: "custom.conf.j2"
+    dest: "/custom.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
+- block:
+  - name: create a network for all clowder setup
+    docker_network:
+      name: clowder
+      driver: "overlay"
+      attachable: "yes"
+      ipam_config:
+        - subnet: 17.7.0.0/16
+
+    ######################################################
+    ### escluster ###
+  - name: create escluster service
+    docker_stack:
+      name: "es"
+      state: "present"
+      compose:
+        - version: "3.5"
+          services:
+            escluster:
+              image: "{{ elastic_search_image }}"
+              networks:
+                - clowder
+              volumes:
+                - /mnt/es-data:/usr/share/elasticsearch/data
+                - /mnt/es-logs:/usr/share/elasticsearch/logs
+              deploy:
+                mode: global
+                endpoint_mode: dnsrr       
+                resources:
+                  limits:
+                    memory: 2G
+              # for somereasons, environment varibles not passed on to elsaticearch
+              command: elasticsearch -Des.cluster.name=clowder -Dnetwork.host=0.0.0.0 -Des.discovery.zen.ping.multicast.enabled=false -Des.discovery.zen.ping.unicast.hosts=escluster -Des.gateway.expected_nodes=3 -Des.discovery.zen.minimum_master_nodes=2 -Des.gateway.recover_after_nodes=2 -Des.network.bind=_eth0:ipv4_ 
+          networks:
+            clowder:
+              external: true
+  ######################################################
+  ### mongo ###
+  - name: create mongo service
+    docker_stack:
+      name: "mongo"
+      compose:
+        - version: "3.5"
+          services:
+            mongo:
+              image: "{{ mongo_image }}"
+              networks:
+                - clowder
+              volumes:
+                - /mnt/mongo-data:/data/db
+                - /mnt/mongo-configs:/data/configdb
+              deploy:
+                mode: global
+                endpoint_mode: dnsrr       
+                resources:
+                  limits:
+                    memory: 1G
+              command: mongod --replSet clowder --port 27017 --noauth
+          networks:
+            clowder:
+              external: true
+
+  ### copy file init_mongo.sh ##
+  - name: copy init_mongo.sh
+    template:
+      src: "init_mongo.sh.j2"
+      dest: "/init_mongo.sh"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+
+  - name: sleep to wait things to calmn down 
+    pause:
+      seconds: 10
+  ### init mongo ###
+  # docker_container does not work - have to use command
+  - name: init mongo
+    command: docker run --name mongoinit --network=clowder --rm -v /init_mongo.sh:/init_mongo.sh mongo:3.6-xenial "/init_mongo.sh"
+
+  # - name: create the rest
+  - name: create the rest of clowder stack
+    docker_stack:
+      name: "clowder"
+      compose:
+        - version: "3.5"
+          services: 
+            ################ traefik
+            traefik:
+              image: "{{ traefik_image }}"
+              command:
+                - "--api"
+                # Entrypoints
+                - "--defaultentrypoints=https,http"
+                - "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https"
+                - "--entryPoints=Name:https Address::443 TLS"
+                # Configuration for acme (https://letsencrypt.org/)
+                - "--acme"
+                - "--acme.storage=/config/acme.json"
+                - "--acme.entrypoint=https"
+                - "--acme.httpChallenge.entryPoint=http"
+                - "--acme.onhostrule=true"
+                - "--acme.onDemand=false"
+                #- --acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+                - "--acme.email={{ traefik_acme_email }}"
+                - --acme.acmelogging=true
+                # DOCKER
+                - "--docker"
+                - "--docker.swarmmode"
+                - "--docker.exposedbydefault=false"
+                - "--docker.watch"
+                - "--docker.network=clowder"
+                - "--loglevel=DEBUG"
+              networks:
+                - clowder
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+                - /mnt/traefik:/config
+              deploy:
+                mode: global
+                update_config:
+                  parallelism: 1
+                  delay: 10s
+                restart_policy:
+                  condition: on-failure
+                placement:
+                  constraints:
+                    - node.role == manager
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=traefik"
+                  - "traefik.port=8080"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /traefik"
+                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
+
+
+            clowder:
+              image: "{{ clowder_image }}"
+              networks:
+                - clowder
+              labels:
+                - "traefik.enable=true"
+                - "traefik.backend=clowder"
+                - "traefik.port=9000"
+                - "traefik.frontend.rule={{ traefik_host }}PathPrefix: {{ clowder_context }}"
+              volumes:
+                - /clowder_data/:/home/clowder/data
+                - /data:/data
+                - /custom.conf:/home/clowder/custom/custom.conf
+                - /custom.play.plugins:/home/clowder/custom/play.plugins
+              deploy:
+                mode: global
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=clowder"
+                  - "traefik.port=9000"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
+                  - "traefik.backend.loadbalancer.sticky=true"
+
+
+            ############### rabbit mq ##################
+            # message broker (optional but needed for extractors)
+            rabbitmq:
+              image: "{{ rabbitmq_image }}"
+              networks:
+                - clowder
+              environment:
+                - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management path_prefix "/rabbitmq"
+                - RABBITMQ_DEFAULT_USER={{ rabbitmq_default_user }}
+                - RABBITMQ_DEFAULT_PASS={{ rabbitmq_default_pass }}
+                - TRAEFIK_HOST={{ traefik_host }}
+                - TRAEFIK_IPFILTER={{ traefik_ip_filters }}
+              volumes:
+                - /mnt/rabbitmq:/var/lib/rabbitmq
+              deploy:
+                mode: replicated
+                replicas: 1
+                # endpoint_mode: dnsrr
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=rabbitmq"
+                  - "traefik.port=15672"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /rabbitmq"
+                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
+                
+
+
+            ############# monitor #################  
+            # monitor clowder extractors
+            monitor:
+              image: "{{ monitor_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+                - RABBITMQ_MGMT_PORT={{ rabbitmq_mgmt_port }}
+                - RABBITMQ_MGMT_PATH={{ rabbitmq_mgmt_path }}
+              deploy:
+                mode: replicated
+                replicas: 1
+                # endpoint_mode: dnsrr
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=monitor"
+                  - "traefik.port=9999"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /monitor"
+                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
+
+            # not needed for test
+            # portainer:
+            #   image: "{{ portainer_image }}"
+            #   command:
+            #     - --admin-password={{ portainer_password }}
+            #     - --host=unix:///var/run/docker.sock
+            #   networks:
+            #     - clowder
+            #   environment:
+            #     - TRAEFIK_HOST="{{ traefik_host }}"
+            #     - TRAEFIK_IPFILTER="{{ traefik_ip_filters }}"
+            #   volumes:
+            #     - /var/run/docker.sock:/var/run/docker.sock
+            #     - /mnt/portainer:/data
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     # endpoint_mode: dnsrr
+            #     restart_policy:
+            #       condition: on-failure
+            #     labels:
+            #       - "traefik.enable=true"
+            #       - "traefik.backend=portainer"
+            #       - "traefik.frontend.rule=${TRAEFIK_FRONTEND_RULE:-}PathPrefixStrip:/portainer"
+            #       - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
+            #       - "traefik.docker.network=clowder"
+            #       - "traefik.redirectorservice.frontend.entryPoints=http"
+            #       - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+            #       - "traefik.webservice.frontend.entryPoints=https"
+
+
+            # ----------------------------------------------------------------------
+            # EXTRACTORS
+            # ----------------------------------------------------------------------
+            # extract checksum
+            # filedigest:
+            #   image: "{{ filedigest_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #   volumes:
+            #     - /data:/data
+
+            # extract preview image
+            imagepreview:
+              image: "{{ imagepreview_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                # mode: global
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+            # extract image metadata
+            imagemetadata:
+              image: "{{ imagemetadata_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                # mode: global
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+            # extract preview image from audio spectrogram
+            audiopreview:
+              image: "{{ audiopreview_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+            # extract pdf preview image
+            pdfpreview:
+              image: "{{ pdfpreview_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+            # extract video preview image as well as smaller video
+            videopreview:
+              image: "{{ videopreview_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+            hyperspy-dm3:
+              image: "{{ hyperspydm3_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                # mode: global
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+
+            bioformat-extractor:
+              image: "{{ bioformat_extractor_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rabbitmq
+                - clowder
+              environment:
+                - RABBITMQ_URI={{ rabbitmq_uri }}
+              deploy:
+                # mode: global
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+              volumes:
+                - /data:/data
+
+          networks:
+            clowder:
+              external: true
+
+  when: inventory_hostname == groups['SwarmMaster'][0] 

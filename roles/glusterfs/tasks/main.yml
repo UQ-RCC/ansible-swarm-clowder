@@ -1,0 +1,67 @@
+- block:
+  - name: install gluster
+    apt: 
+      name: 
+      - glusterfs-client
+      - glusterfs-server
+      state: latest
+  - name: start daemon
+    service:
+      name: glusterd
+      enabled: yes 
+      state: started
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: make brick dir
+    file: 
+      state: directory
+      path: "{{ brickmnt }}/brick"
+
+  - name: make volume mount dir
+    file: 
+      state: directory
+      path: "{{ volmnt }}"
+      mode: u=rwx,g=rwx,o=rwx
+  
+  # - debug:
+  #     msg: 
+  #       # - "{{ hostvars[inventory_hostname][inventory_hostname] }}"
+  #       - "{{ server_list }}"
+  #       - "{{ hostvars[inventory_hostname]['secondary-ip'] }}"
+  #       # - "{{ inventory_hostname }}"
+  #       # - "{{ ansible_default_ipv4.address }}"
+  #   run_once: true
+
+
+  - name: create volume
+    gluster_volume: 
+      name: "{{ volname }}"
+      brick: "{{ brickmnt }}/brick"
+      cluster: "{{ server_list }}"
+      replicas: "{{ replicas }}"
+      state: present
+      host: "{{ hostvars[inventory_hostname]['secondary-ip'] }}"
+      force: true
+    run_once: true
+
+  - name: add auto.qriscloud
+    template:
+      src: auto.gfs.j2
+      dest: "/etc/auto.gfs"
+      owner: root
+      group: root
+      mode: 0644
+  
+  - name: add entry in /etc/auto.master
+    lineinfile:
+      path: /etc/auto.master
+      line: /- file:/etc/auto.gfs
+      state: present
+
+  - name: restart
+    service:
+      name: autofs
+      state: restarted
+
+
+  when: ansible_distribution == "Ubuntu"

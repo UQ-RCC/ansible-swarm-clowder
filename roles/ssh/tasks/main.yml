@@ -1,0 +1,77 @@
+- name: generate {{ ssh_known_hosts_file }}
+  template:
+    src: known_hosts.j2
+    dest: "{{ ssh_known_hosts_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  register: generate_known_hosts
+
+- name: hash {{ ssh_known_hosts_file }}
+  shell: ssh-keygen -H -f {{ ssh_known_hosts_file | quote }}
+
+- name: fix {{ ssh_known_hosts_file }} permissions
+  file:
+    path: "{{ ssh_known_hosts_file }}"
+    owner: root
+    group: root
+    mode: 0644
+    state: file
+
+- name: delete old file
+  file:
+    path: "{{ ssh_known_hosts_file }}.old"
+    state: absent
+
+- name: generate {{ ssh_shosts_file }}
+  template:
+    src: shosts.equiv.j2
+    dest: "{{ ssh_shosts_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  when: inventory_hostname in ssh_server_hosts
+
+- name: disable root login
+  lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^#?\s*PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+
+- name: disable password auth
+  lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^#?\s*PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+
+- name: enable host auth
+  lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^#?\s*HostbasedAuthentication'
+    line: 'HostbasedAuthentication yes'
+    state: present
+  when: inventory_hostname in ssh_server_hosts
+
+- name: ignore user's rhosts
+  lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^#?\s*IgnoreRhosts'
+    line: 'IgnoreRhosts yes'
+    state: present
+  when: inventory_hostname in ssh_server_hosts
+
+- name: configure client
+  template:
+    src: ssh_config.j2
+    dest: "{{ ssh_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  when: inventory_hostname in ssh_client_hosts
+
+- name: reload sshd
+  service:
+    name: sshd
+    state: reloaded

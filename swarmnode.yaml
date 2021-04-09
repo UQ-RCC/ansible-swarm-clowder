@@ -1,0 +1,100 @@
+heat_template_version: 2016-10-14
+description: A swarm node
+
+parameters:
+  node_name:
+    type: string
+  ansible_host_group: 
+    type: string
+  node_image_id:
+    type: string
+    constraints:
+      - custom_constraint: glance.image
+  node_initial_user:
+    type: string
+  ansible_user:
+    type: string
+  ssh_key_name:
+    type: string
+    constraints:
+      - custom_constraint: nova.keypair
+  avail_zone:
+    type: string
+  project_name:
+    type: string
+    default: dev
+  node_flavour:
+    type: string
+    constraints:
+      - custom_constraint: nova.flavor  
+  volume_size:
+    type: number
+    description: Size of the volume to be created.
+    default: 10
+    constraints:
+      - range: { min: 1, max: 1024 }
+        description: must be between 1 and 1024 Gb.
+
+resources:
+  cloud_init_config:
+    type: 'OS::Heat::CloudConfig'
+    properties:
+      cloud_config:
+        disable_root: false
+        manage_resolv_conf: false
+        timezone: Australia/Brisbane
+        cloud_init_modules:
+          - migrator
+          - seed_random
+          - bootcmd
+          - write-files
+          - growpart
+          - resizefs
+          - disk_setup
+          - mounts
+          - ca-certs
+          - rsyslog
+          - users-groups
+          - ssh
+  
+  server_init:
+    type: 'OS::Heat::MultipartMime'
+    properties:
+      parts:
+        - config: { get_resource: cloud_init_config }
+  
+  
+  swarmnode:
+    type: OS::Nova::Server
+    properties:
+      name: {get_param: node_name}
+      availability_zone: { get_param: avail_zone }
+      networks:
+        - allocate_network: auto
+      image: { get_param: node_image_id }
+      flavor: { get_param: node_flavour }
+      key_name: { get_param: ssh_key_name }
+      security_groups: [default]
+      user_data_format: RAW
+      user_data:
+        get_resource: server_init
+      metadata:
+        ansible_host_groups: { get_param: ansible_host_group }
+        ansible_ssh_user: { get_param: ansible_user }
+        initial_ssh_user: { get_param: node_initial_user }
+        project_name: { get_param: project_name }
+
+  swarmnode_cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: { get_param: node_name }
+      size: { get_param: volume_size }
+      availability_zone: { get_param: avail_zone }
+
+  volume-attachment-01:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: { get_resource: swarmnode }
+      volume_id: { get_resource: swarmnode_cinder_volume }
+
+

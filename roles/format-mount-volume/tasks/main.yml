@@ -1,0 +1,37 @@
+---
+- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+  filesystem:
+    fstype: ext4
+    dev: /dev/vdb
+
+- name: autofs ubuntu
+  apt: 
+    name:
+      - autofs
+    state: present
+  when: ansible_distribution == 'Ubuntu'
+
+- name: install autofs if centos
+  yum: 
+    name: 
+      - autofs
+    state: installed
+  when: ansible_distribution == 'CentOS'
+
+- name: add entry to /etc/auto.master 
+  lineinfile:
+    dest: /etc/auto.master
+    line: '/- file:/etc/auto.volumestorage'
+
+- name: add auto.qriscloud
+  template:
+    src: auto.volume.j2
+    dest: "/etc/auto.volumestorage"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: bring up autofs 
+  service: 
+    name: autofs
+    state: restarted

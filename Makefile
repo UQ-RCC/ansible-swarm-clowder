@@ -1,0 +1,61 @@
+HEAT_TEMPLATE=swarm.yaml
+
+check-vars:
+	test -n "$(SSH_KEY_NAME)" # $$SSH_KEY_NAME
+	test -n "$(STACK_NAME)" # $$STACK_NAME
+	test -n "$(OS_PROJECT_NAME)" # $$OS_PROJECT_NAME
+
+stack: check-vars validate
+	openstack stack create \
+		-t ${HEAT_TEMPLATE} ${STACK_NAME}
+
+update: check-vars validate
+	openstack stack update -t ${HEAT_TEMPLATE} ${STACK_NAME}
+
+${HEAT_TEMPLATE}: ${HEAT_TEMPLATE}.j2 gen-swarm-template.py
+	./gen-swarm-template.py \
+		--node-image-id=03433e1b-d092-40eb-bbce-cd3842899001 \
+		--node-initial-user=ubuntu \
+		--node-flavour-master=m3.small \
+		--node-flavour-slave=m3.small \
+		--node-count-master=1 \
+		--node-count-slave=1 \
+		--ansible-user=ubuntu \
+		--ssh-key-name=${SSH_KEY_NAME} \
+		--avail-zone=QRIScloud \
+		--project-name=${STACK_NAME}
+
+destroy-stack:
+	openstack stack delete -y ${STACK_NAME}
+
+validate: ${HEAT_TEMPLATE}
+	openstack orchestration template validate -t ${HEAT_TEMPLATE} # > /dev/null
+
+clean:
+	rm -f inventory.yml swarm.yaml
+
+inventory.yml: ${HEAT_TEMPLATE} make_inventory_openstack.py
+	./make_inventory_openstack.py ${STACK_NAME} > $@
+
+inventories: check-vars inventory.yml
+
+# bootstrap: inventories bootstrap.yml
+bootstrap: bootstrap.yml
+	ansible-playbook -i inventory.yml bootstrap.yml
+
+init-swarm: init-swarm-cluster.yml
+	ansible-playbook -i inventory.yml init-swarm-cluster.yml
+
+inspect-swarm: inspect-swarm-cluster.yml
+	ansible-playbook -i inventory.yml inspect-swarm-cluster.yml
+
+destroy-swarm: destroy-swarm-cluster.yml
+	ansible-playbook -i inventory.yml destroy-swarm-cluster.yml
+
+deploy-clowder: clowder.yml
+	ansible-playbook -i inventory.yml clowder.yml --tags=setup
+
+destroy-clowder: clowder.yml
+	ansible-playbook -i inventory.yml clowder.yml --tags=destroy
+
+.PHONY: check-vars clean stack inventories bootstrap inventory.yml init-swarm

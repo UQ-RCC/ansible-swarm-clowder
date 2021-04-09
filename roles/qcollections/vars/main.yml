@@ -1,0 +1,11 @@
+---
+collections_mount_point: "/data"
+
+autofs_map_object_class: "automountMap"
+autofs_entry_object_class: "automount"
+autofs_map_attribute: "ou"
+autofs_entry_attribute: "cn"
+autofs_value_attribute: "automountInformation"
+
+ldap_usetls: "yes"
+ldap_tlsrequired: "yes"

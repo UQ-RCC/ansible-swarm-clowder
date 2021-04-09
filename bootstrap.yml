@@ -1,0 +1,92 @@
+---
+- hosts: '*'
+  become: yes
+  vars:
+    host_key_checking: False
+  vars_files:
+    - vars/vars.yml
+    - vars/secrets.yml
+  tasks:
+  - include_vars: vars/vars.yml
+  - block:
+    - name: update apt cache [ubuntu]
+      apt: upgrade=dist update_cache=yes
+    - name: install packages [ubuntu]
+      apt:
+        name:
+          - python3-pip
+          - git
+          - htop
+          - vim
+          - nfs-common
+        state: present
+    when: ansible_distribution == "Ubuntu"
+  - block:
+    - name: enable epel [centos]
+      yum: name=epel-release state=present
+    - name: update system [centos]
+      yum: name='*' state=latest
+    - name: install packages [centos]
+      yum:
+        name:
+          - python-pip
+          - git
+          - htop
+        state: latest
+    when: ansible_distribution == 'CentOS'
+
+  - name: install ansible
+    pip:
+      name: ansible
+      state: absent
+
+  - name: add correct hostname
+    add_hosts_entry:
+      file: /etc/hosts
+      hosts: ["{{ ansible_hostname }}"]
+      ips: ["{{ ansible_ssh_host }}"]
+      append: true
+  - name: load inventory
+    include_vars:
+      file: inventory.yml
+      name: inventory
+  - name: patch /etc/hosts with stage 2
+    add_hosts_entry:
+      file: /etc/hosts
+      hosts: "{{ [item.key] }}"
+      ips: "{{ [item.value.ansible_ssh_host] }}"
+      append: true
+    with_dict: "{{ inventory.all.hosts }}"
+  - name: copy inventory
+    copy:
+      dest: /root/inventory.yml
+      src: inventory.yml
+      mode: 0600
+
+  ######################################################
+  ### starts temporary part #####    
+  ##### remove this when qcollections autofs works
+  - name: create mount point
+    file: 
+      path: /data/Q3504/
+      state: directory
+      mode: '0755'
+
+  - name: mount Q3505
+    mount:
+      path: /data/Q3504/
+      src: 10.255.122.28:/gpfs/UQ02/collections/Q3504/Q3504
+      fstype: nfs
+      opts: rw,nosuid,nodev,relatime,vers=4,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=15,retrans=5,sec=sys,local_lock=none
+      state: mounted
+  ### end temporary part #####    
+  ##########################################    
+
+  roles:
+    - { role: apt-get-upgrade }
+    - { role: base }
+    - { role: format-mount-volume }
+    # - { role: qcollections }
+    - { role: glusterfs, volname: "{{ gluster_volname }}", server_list: "{{ allnodes_second_ips }}", volmnt: "{{ gluster_volmnt }}", replicas: "{{ gluster_replicas }}", brickmnt: "{{ gluster_brickmnt }}" }
+    
+

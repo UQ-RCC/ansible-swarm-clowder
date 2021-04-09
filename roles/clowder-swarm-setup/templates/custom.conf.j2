@@ -1,0 +1,169 @@
+# path
+# This allows you to change the path of clowder, the default is the root folder. If you change this you
+# will alos need to update clowder.rabbitmq.clowderurl and securesocial.onLoginGoTo and securesocial.onLogoutGoTo
+application.context={{ clowder_context }}
+securesocial.onLoginGoTo={{ clowder_context }}
+securesocial.onLogoutGoTo={{ clowder_context }}
+securesocial.ssl={{ clowder_ssl }}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# cilogon
+securesocial.cilogon.authorizationUrl="{{ securesocial_cilogon_authorizationurl }}"
+securesocial.cilogon.accessTokenUrl="{{ securesocial_cilogon_accesstokenurl }}"
+securesocial.cilogon.userinfoUrl="{{ securesocial_cilogon_userinfourl }}"
+securesocial.cilogon.clientId="{{ securesocial_cilogon_clientid }}"
+securesocial.cilogon.clientSecret="{{ securesocial_cilogon_clientsecret }}" 
+securesocial.cilogon.scope="{{ securesocial_cilogon_scope }}"
+
+ehcacheplugin = enabled
+securesocial.cilogon.mergeToExistingUser=true
+
+# security options
+# following should be set when starting clowder following values should be changed.
+application.secret="{{ clowder_secret }}"
+
+commKey="{{ clowder_key }}"
+
+# registration
+# To enable registration you will need set the following value to true, and specify a admin account
+registerThroughAdmins=false
+
+initialAdmins="{{ clowder_admins }}"
+
+# email server
+# Following will print the email to the console, to enable sending email set smtp.mock to false
+# and you get it printed to the console
+smtp.mock="{{ smtp_mock }}"
+smtp.host="{{ smtp_server }}"
+
+# storage
+service.byteStorage=services.filesystem.DiskByteStorageService
+
+# location in case of services.filesystem.DiskByteStorageService
+clowder.diskStorage.path="/home/clowder/data"
+
+# mongo server
+mongodbURI="mongodb://mongo:27017/clowder?replicaSet=clowder"
+
+# rabbitmq
+clowder.rabbitmq.uri="{{ rabbitmq_uri }}"
+
+clowder.rabbitmq.exchange={{ rabbitmq_exchange }}
+
+clowder.rabbitmq.clowderurl="{{ rabbitmq_clowder_url }}"
+
+# elasticsearch
+elasticsearchSettings.clusterName="clowder"
+elasticsearchSettings.serverAddress="escluster"
+elasticsearchSettings.serverPort=9300
+
+
+# for uqrcc
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Whether or not datasets are automatically added to the
+# spaces of a collection when a dataset is created within a collection,
+# or when a dataset is added to a collection or a collection
+# is added to a space
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addDatasetToCollectionSpace=true
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Enable the user to set if spaces/collections/datasets should
+# be public or private. This allows the user to toggle things with
+# regard to the permission that is set above.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enablePublic = true
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Are new spaces required to be verified by a serveradmin before it
+# will show up in the spaces list.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+verifySpaces = false
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# What setup should clowder use for permissions this can be either:
+# - private : everything needs a valid login
+# - public  : anonymous can do all read operations
+# The default is public, if you set this to private your probably
+# want to set registerThroughAdmins=true and set the admin for the
+# server.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+permissions = private
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Move file between datasets within the space,
+# false - default - move to all datsets a user has access to
+# true - datasets restricted only to the space
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+datasetFileWithinSpace = true
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if this is true, then datasets, collections, spaces a user has created but which are not shared
+# will not be visible
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+showOnlySharedInExplore = true
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if this is true, then delete will send a collection or dataset to trash instead of just deleted
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+useTrash = false
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# show the username/password login. If this is set to false, or the
+# plugin is disabled it will not show the username/password prompt
+# when logging in.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enableUsernamePassword = true
+securesocial.registrationEnabled=false
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Disable events view. On systems with many events this can cause
+# a problem. This allows you to disable events. This is a known issue
+# and will be fixed in the next release at which point this flag will
+# no longer be used
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+clowder.disable.events = true
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Whitelist of locations that are valid sources for uploading by file path.
+# Files in these folders can be added to Clowder/Mongo by posting a path to
+# them, rather than posting the file itself. Other locations will be rejected.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+filesystem.sourcepaths=["{{ q_collection_root }}"]
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# only enable admins to create spaces
+# use this with ppmssync
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+onlyAdminsCreateSpace=true
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+storageroot.dir="{{ q_collection_root }}"
+
+fileorganiser.storagemetadatafield="projStorage"
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ppms
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ppms.url="{{ ppms_url }}"
+
+ppms.pumapikey={{ ppms_puma_key }}
+
+ppms.api2key={{ ppms_api2_key }}
+
+ppms.action.getextraprojectprofile={{ ppms_extra_profile_action }}
+
+ppms.project.profile.storagefield={{ ppms_storage_field }}
+
+# in minutes - a day
+ppms.syncEvery={{ ppms_sync_mins }}
+
+ppms.startingProjectId={{ ppms_starting_pid }}
+
+ppms.default.securesocial={{ ppms_default_securesocial }}
+
+ppms.action.getprojects=getprojects
+ppms.action.getprojectmember=getprojectusers
+ppms.action.getuser=getuser

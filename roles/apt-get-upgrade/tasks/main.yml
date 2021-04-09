@@ -1,0 +1,10 @@
+---
+- name: apt-get update
+  apt: 
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: apt-get upgrade
+  apt: 
+    upgrade: safe
+  when: ansible_distribution == "Ubuntu"

@@ -1,0 +1,56 @@
+---
+- hosts: SwarmMaster, SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - include_vars: vars/vars.yml
+
+
+  - name: Init swarm on the first node
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ hostvars[inventory_hostname]['secondary-ip'] }}"
+      tls: yes
+      validate_certs: yes
+    register: result
+    when: inventory_hostname == groups['SwarmMaster'][0]
+
+
+  - name: Get join-token for manager nodes
+    set_fact:
+      join_token_manager: "{{ hostvars[groups['SwarmMaster'][0]].result.swarm_facts.JoinTokens.Manager }}"
+
+  - name: Get join-token for worker nodes
+    set_fact:
+      join_token_worker: "{{ hostvars[groups['SwarmMaster'][0]].result.swarm_facts.JoinTokens.Worker }}"
+
+
+  - name: "debug"
+    debug:
+      msg: 
+      - "remote adds: {{ master_ips }}"
+      - "advertise add: {{ hostvars[inventory_hostname]['secondary-ip'] }}"
+      - "Join token manager: {{ join_token_manager }}"
+      - "Join token worker: {{ join_token_worker }}"
+
+
+
+  - name: Join other managers
+    docker_swarm:
+      state: join
+      join_token: "{{ join_token_manager }}"
+      advertise_addr: "{{ hostvars[inventory_hostname]['secondary-ip'] }}"
+      remote_addrs: "{{ master_ips }}"
+    when:
+      - inventory_hostname in groups['SwarmMaster']
+      - inventory_hostname != groups['SwarmMaster'][0]
+
+  - name: Join workers
+    docker_swarm:
+      state: join
+      join_token: "{{ join_token_worker }}"
+      advertise_addr: "{{ hostvars[inventory_hostname]['secondary-ip'] }}"
+      remote_addrs: "{{ master_ips }}"
+    when:
+      - inventory_hostname not in groups['SwarmMaster']

@@ -1,0 +1,20 @@
+---
+- hosts: SwarmMaster, SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:      
+  - name: workers leave first
+    docker_swarm:
+      state: absent
+      force: true
+    when:
+      - inventory_hostname not in groups['SwarmMaster']
+
+  - name: masters leave last
+    docker_swarm:
+      state: absent
+      force: true
+    when:
+      - inventory_hostname in groups['SwarmMaster']
+

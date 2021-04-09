@@ -1,0 +1,66 @@
+- block:
+  - name: purge packages
+    apt:
+      name:
+        - docker 
+        - docker-engine 
+        - docker.io 
+        - containerd 
+        - runc
+      state: absent
+      purge: yes
+  - name: purge autoremove packages
+    apt:
+      autoremove: yes
+      purge: yes
+  - name: apt-get update
+    apt: 
+      update_cache: yes
+      
+  - name: install some packages
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+        - autofs
+      state: present
+      update_cache: yes
+
+  - name: install some packages
+    apt:
+      name:
+        - ipcalc
+        - htop
+        - vim
+        - tmux
+        - git
+      state: present
+      update_cache: yes
+
+  - name: Add Docker GPG key
+    apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+  - name: Add Docker APT repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+
+  - name: Install Docker CE
+    apt:
+      name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+      update_cache: yes
+      
+  - name: Install prerequisites for docker-compose
+    apt:
+      name: ['python3-pip', 'python3-setuptools', 'virtualenv']
+
+  - name: Install docker-compose
+    pip:
+      name:
+      - docker 
+      - docker-compose
+      - jsondiff
+
+  when: ansible_distribution == 'Ubuntu'

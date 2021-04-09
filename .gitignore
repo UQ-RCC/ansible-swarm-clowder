@@ -1,0 +1,6 @@
+inventory.yml
+inventory-dev.yml
+inventory-prod.yml
+swarm.yaml
+vars/secrets.yml
+roles/clowder-swarm-setup/vars/main.yml

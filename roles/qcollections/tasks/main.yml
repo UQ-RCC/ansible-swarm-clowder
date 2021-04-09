@@ -1,0 +1,69 @@
+---
+- name: autofs ubuntu
+  apt: 
+    name:
+      - autofs
+      - autofs-ldap
+    state: present
+  when: ansible_distribution == 'Ubuntu'
+
+- name: install autofs if centos
+  yum: 
+    name: 
+      - autofs
+      - autofs-ldap
+    state: installed
+  when: ansible_distribution == 'CentOS'
+
+- name: add auto.qriscloud
+  template:
+    src: auto.qcollections.j2
+    dest: "/etc/auto.qcollections"
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+
+- name: add entry to /etc/auto.master 
+  lineinfile:
+    dest: /etc/auto.master
+    line: "{{ item.line }}"
+    state: "{{ item.state }}" 
+  with_items:  
+    - { line: "{{ collections_mount_point }} file:/etc/auto.qcollections", state: "present" }
+    - { line: "+auto.master", state: "absent" }
+
+- name: add/replace /etc/autofs.conf
+  template:
+    src: autofs.conf.j2
+    dest: "/etc/autofs.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+    force: true
+
+- name: add/replace autofs_ldap_auth.conf
+  template:
+    src: autofs_ldap_auth.conf.j2
+    dest: "/etc/autofs_ldap_auth.conf"
+    owner: root
+    group: root
+    mode: 0600
+    backup: true
+    force: true
+
+- name: add/replace /etc/nsswitch.conf
+  template:
+    src: nsswitch.conf.j2
+    dest: "/etc/nsswitch.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+    force: true
+
+# - name: bring up autofs 
+#   service: 
+#     name: autofs
+#     state: restarted

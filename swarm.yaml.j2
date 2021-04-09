@@ -1,0 +1,111 @@
+heat_template_version: 2016-10-14
+description: Deploy a Docker Swarm Cluster
+
+parameters:
+  ##
+  # General Configuration
+  ##
+  node_image_id:
+    type: string
+    default: {{ node_image_id }}
+    constraints:
+      - custom_constraint: glance.image
+  node_initial_user:
+    type: string
+    default: {{ node_initial_user }}
+  ansible_user:
+    type: string
+    default: {{ ansible_user }}
+  ssh_key_name:
+    type: string
+    default: {{ ssh_key_name }}
+    constraints:
+      - custom_constraint: nova.keypair
+  avail_zone:
+    type: string
+    default: {{ avail_zone }}
+  project_name:
+    type: string
+    default: dev
+  ##
+  # Node Flavours
+  ##
+  node_flavour_master:
+    type: string
+    default: {{ node_flavour_master }}
+    constraints:
+      - custom_constraint: nova.flavor
+  node_flavour_slave:
+    type: string
+    default: {{ node_flavour_slave }}
+    constraints:
+      - custom_constraint: nova.flavor
+  ##
+  # Node Counts
+  ##
+  node_count_master:
+    type: number
+    default: {{ node_count_master }}
+  node_count_slave:
+    type: number
+    default: {{ node_count_master }}
+  
+  volume_size:
+    type: number
+    description: Size of the volume to be created.
+    default: 10
+    constraints:
+      - range: { min: 1, max: 1024 }
+        description: must be between 1 and 1024 Gb.
+
+resources:
+
+  ##
+  # Swarm master nodes
+  # Count = {{ node_count_master }}
+  ##{% for i in range(node_count_master) %}
+  master_{{ '%02d'|format(i|int) }}:
+    type: 'OS::Heat::ResourceGroup'
+    properties:
+      count: {get_param: node_count_master}
+      resource_def:
+        type: swarmnode.yaml
+        properties:
+          node_name: 
+            list_join: ['-', [{get_param: project_name}, master%index% ]]
+          ansible_host_group: SwarmMaster
+          node_image_id: { get_param: node_image_id }
+          node_initial_user: { get_param: node_initial_user }
+          ansible_user: { get_param: ansible_user }
+          ssh_key_name: { get_param: ssh_key_name }
+          avail_zone: { get_param: avail_zone }
+          project_name: { get_param: project_name }
+          node_flavour: { get_param: node_flavour_master }
+          volume_size: { get_param: volume_size }
+      
+{% endfor %}
+
+  ##
+  # Swarm slave nodes
+  # Count = {{ node_count_slave }}
+  ##{% for i in range(node_count_slave) %}
+  slave_{{ '%02d'|format(i|int) }}:
+    type: 'OS::Heat::ResourceGroup'
+    properties:
+      count: {get_param: node_count_slave}
+      resource_def:
+        type: swarmnode.yaml
+        properties:
+          node_name: 
+            list_join: ['-', [{get_param: project_name}, slave%index% ]]
+          ansible_host_group: SwarmSlave
+          node_image_id: { get_param: node_image_id }
+          node_initial_user: { get_param: node_initial_user }
+          ansible_user: { get_param: ansible_user }
+          ssh_key_name: { get_param: ssh_key_name }
+          avail_zone: { get_param: avail_zone }
+          project_name: { get_param: project_name }
+          node_flavour: { get_param: node_flavour_master }
+          volume_size: { get_param: volume_size }
+      
+{% endfor %}

@@ -1,0 +1,49 @@
+---
+- block:
+  - name: clowder
+    docker_stack:
+      state: absent
+      name: "clowder"
+
+  - name: down mongodb
+    docker_stack:
+      state: absent
+      name: "mongo"
+
+  - name: mongo elastic search
+    docker_stack:
+      state: absent
+      name: "es"
+
+  - name: sleep to wait things to calmn down 
+    pause:
+      seconds: 30
+
+  - name: bring network down
+    retries: 3
+    delay: 3
+    docker_network:
+      name: clowder
+      state: absent
+      force: yes
+  when: inventory_hostname == groups['SwarmMaster'][0] 
+
+  # uncomment to delete data
+  # - name: data for es
+  #   file:
+  #     path: /mnt/es-data
+  #     state: absent
+  # - name: log for es
+  #   file:
+  #     path: /mnt/es-logs
+  #     state: absent
+  # - name: data for mongo
+  #   file:
+  #     path: /mnt/mongo-data
+  #     state: absent
+  # - name: config for mongo
+  #   file:
+  #     path: /mnt/mongo-configs
+  #     state: absent
+
+    

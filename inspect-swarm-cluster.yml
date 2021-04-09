@@ -1,0 +1,18 @@
+---
+- hosts: SwarmMaster, SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:      
+  - name: Get info on Docker Swarm
+    docker_swarm_info:
+      nodes: yes
+      verbose_output: yes
+    register: result
+    when: inventory_hostname == groups['SwarmMaster'][0]
+
+  - name: informaiton 
+    debug:
+      msg: |
+        Swarm facts: {{ result.swarm_facts }}
+    when: inventory_hostname == groups['SwarmMaster'][0] 

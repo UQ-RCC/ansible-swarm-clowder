@@ -1,0 +1,14 @@
+---
+- hosts: '*'
+  become: yes
+  vars:
+    host_key_checking: False
+  vars_files:
+    - vars/vars.yml
+    - vars/secrets.yml
+  roles:
+    - { role: 'clowder-swarm-setup', tags: 'setup' }
+    - { role: 'clowder-swarm-delete', tags: 'destroy' }
+    
+    
+

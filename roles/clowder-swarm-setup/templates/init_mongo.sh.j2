@@ -1,0 +1,5 @@
+#!/bin/bash
+apt update -y
+apt install -y dnsutils
+dig +short mongo | awk 'BEGIN { ORS="," };{ print "{_id:"NR", host:\\\""$1":27017\\\"}"}' | sed 's/.$//' | xargs -I {} echo -E "rs.initiate({ _id: \"clowder\", members: [{}], settings: { getLastErrorDefaults: { w: \"majority\", wtimeout: 30000 }}})" > /init_mongo.js
+mongo --host mongo:27017 < /init_mongo.js
