@@ -17,9 +17,9 @@ ${HEAT_TEMPLATE}: ${HEAT_TEMPLATE}.j2 gen-swarm-template.py
 		--node-image-id=03433e1b-d092-40eb-bbce-cd3842899001 \
 		--node-initial-user=ubuntu \
 		--node-flavour-master=m3.small \
-		--node-flavour-slave=m3.small \
-		--node-count-master=1 \
-		--node-count-slave=1 \
+		--node-flavour-slave=m3.medium \
+		--node-count-master=3 \
+		--node-count-slave=3 \
 		--ansible-user=ubuntu \
 		--ssh-key-name=${SSH_KEY_NAME} \
 		--avail-zone=QRIScloud \

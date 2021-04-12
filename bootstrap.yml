@@ -63,6 +63,20 @@
       src: inventory.yml
       mode: 0600
 
+  roles:
+    - { role: apt-get-upgrade }
+    - { role: base }
+    - { role: format-mount-volume }
+    
+- hosts: SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  vars_files:
+    - vars/vars.yml
+    - vars/secrets.yml
+  tasks:
+  - include_vars: vars/vars.yml
   ######################################################
   ### starts temporary part #####    
   ##### remove this when qcollections autofs works
@@ -81,12 +95,6 @@
       state: mounted
   ### end temporary part #####    
   ##########################################    
-
   roles:
-    - { role: apt-get-upgrade }
-    - { role: base }
-    - { role: format-mount-volume }
     # - { role: qcollections }
-    - { role: glusterfs, volname: "{{ gluster_volname }}", server_list: "{{ allnodes_second_ips }}", volmnt: "{{ gluster_volmnt }}", replicas: "{{ gluster_replicas }}", brickmnt: "{{ gluster_brickmnt }}" }
-    
-
+    - { role: glusterfs, volname: "{{ gluster_volname }}", server_list: "{{ allslaves_second_ips }}", volmnt: "{{ gluster_volmnt }}", replicas: "{{ gluster_replicas }}", brickmnt: "{{ gluster_brickmnt }}" }

@@ -1,44 +1,50 @@
 ---
-- name: data for es
-  file:
-    path: /mnt/es-data
-    state: directory
-    mode: '0755'
-- name: log for es
-  file:
-    path: /mnt/es-logs
-    state: directory
-    mode: '0755'
-- name: data for mongo
-  file:
-    path: /mnt/mongo-data
-    state: directory
-    mode: '0755'
-- name: config for mongo
-  file:
-    path: /mnt/mongo-configs
-    state: directory
-    mode: '0755'
-- name: traefik
-  file:
-    path: /mnt/traefik
-    state: directory
-    mode: '0755'
-- name: clowder
-  file:
-    path: /mnt/clowder
-    state: directory
-    mode: '0755'
-- name: rabbitmq
-  file:
-    path: /mnt/rabbitmq
-    state: directory
-    mode: '0755'
-- name: portainer dir
-  file:
-    path: /mnt/portainer
-    state: directory
-    mode: '0755'
+- block:
+  - name: data for es
+    file:
+      path: /mnt/es-data
+      state: directory
+      mode: '0755'
+  - name: log for es
+    file:
+      path: /mnt/es-logs
+      state: directory
+      mode: '0755'
+  - name: data for mongo
+    file:
+      path: /mnt/mongo-data
+      state: directory
+      mode: '0755'
+  - name: config for mongo
+    file:
+      path: /mnt/mongo-configs
+      state: directory
+      mode: '0755'
+  - name: clowder
+    file:
+      path: /mnt/clowder
+      state: directory
+      mode: '0755'
+  - name: rabbitmq
+    file:
+      path: /mnt/rabbitmq
+      state: directory
+      mode: '0755'
+  - name: portainer dir
+    file:
+      path: /mnt/portainer
+      state: directory
+      mode: '0755'
+  when: inventory_hostname in groups['SwarmSlave']
+
+- block:
+  - name: traefik
+    file:
+      path: /mnt/traefik
+      state: directory
+      mode: '0755'
+  when: inventory_hostname in groups['SwarmMaster']
+
 
 #### volumes for docker #############
 # - name: create 
@@ -123,7 +129,8 @@
     force: "yes"
     backup: "yes"
 
-  when: inventory_hostname == groups['SwarmMaster'][0]
+  when: inventory_hostname == groups['SwarmSlave'][0]
+
 - name: copy custom play plugsin without ppms 
   template:
     src: "custom.play.plugins.withoutppms.j2"
@@ -131,8 +138,8 @@
     mode: '0755'
     force: "yes"
     backup: "yes"
+  when: inventory_hostname != groups['SwarmSlave'][0]
 
-  when: inventory_hostname != groups['SwarmMaster'][0]
 - name: copy custom.conf
   template:
     src: "custom.conf.j2"
@@ -140,6 +147,7 @@
     mode: '0755'
     force: "yes"
     backup: "yes"
+  when: inventory_hostname in groups['SwarmSlave']
 
 - block:
   - name: create a network for all clowder setup
@@ -172,6 +180,9 @@
                 resources:
                   limits:
                     memory: 2G
+                placement:
+                  constraints:
+                    - node.role != manager
               # for somereasons, environment varibles not passed on to elsaticearch
               command: elasticsearch -Des.cluster.name=clowder -Dnetwork.host=0.0.0.0 -Des.discovery.zen.ping.multicast.enabled=false -Des.discovery.zen.ping.unicast.hosts=escluster -Des.gateway.expected_nodes=3 -Des.discovery.zen.minimum_master_nodes=2 -Des.gateway.recover_after_nodes=2 -Des.network.bind=_eth0:ipv4_ 
           networks:
@@ -198,6 +209,9 @@
                 resources:
                   limits:
                     memory: 1G
+                placement:
+                  constraints:
+                    - node.role != manager
               command: mongod --replSet clowder --port 27017 --noauth
           networks:
             clowder:
@@ -301,6 +315,9 @@
                 mode: global
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
                 labels:
                   - "traefik.enable=true"
                   - "traefik.backend=clowder"
@@ -333,6 +350,9 @@
                 # endpoint_mode: dnsrr
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
                 labels:
                   - "traefik.enable=true"
                   - "traefik.backend=rabbitmq"
@@ -364,6 +384,9 @@
                 # endpoint_mode: dnsrr
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
                 labels:
                   - "traefik.enable=true"
                   - "traefik.backend=monitor"
@@ -443,6 +466,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -462,6 +488,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -480,6 +509,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -498,6 +530,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -516,6 +551,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -534,6 +572,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
@@ -553,6 +594,9 @@
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.role != manager
               volumes:
                 - /data:/data
 
