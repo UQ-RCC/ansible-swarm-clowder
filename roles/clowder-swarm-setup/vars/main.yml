@@ -1,0 +1,50 @@
+---
+# elatic search
+elastic_search_image: elasticsearch:2.4.6
+# mongo
+mongo_image: mongo:3.6-xenial
+# traefik configs
+traefik_image: traefik:1.7
+# clowder
+clowder_image: uqrcc/clowder:pitschi1.16.0
+clowder_register: 'false'
+clowder_context: /
+clowder_ssl: 'true'
+rabbitmq_exchange: clowder
+rabbitmq_clowder_url: http://clowder:9000 # for local - or things like https://clowder-docker.ncsa.illinois.edu/clowder/ for remote
+smtp_mock: 'true'
+smtp_server: smtp
+
+q_collection_root: /data
+
+# rabbitmq
+rabbitmq_image: rabbitmq:management-alpine
+rabbitmq_default_user: clowder
+rabbitmq_mgmt_port: 15672
+rabbitmq_mgmt_path: /rabbitmq
+# monitor
+monitor_image: clowder/monitor:latest
+
+# portainer
+portainer_image: portainer/portainer:latest
+
+
+
+#### extractors ###
+filedigest_image: clowder/extractors-digest:latest
+imagepreview_image: clowder/extractors-image-preview:latest
+imagemetadata_image: clowder/extractors-image-metadata:latest
+audiopreview_image: clowder/extractors-audio-preview:latest
+pdfpreview_image: clowder/extractors-pdf-preview:latest
+videopreview_image: clowder/extractors-video-preview:latest
+hyperspydm3_image: tcnichol/hyperspy-dm3:2020.08.05
+bioformat_extractor_image: uqrcc/bioformat-extractor:0.10
+
+
+
+### ppms
+ppms_extra_profile_action: Report76
+ppms_storage_field: RawDataCollection
+ppms_sync_mins: 10080 #  7 day
+ppms_starting_pid: 900
+ppms_default_securesocial: cilogon
