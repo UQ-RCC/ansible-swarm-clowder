@@ -4,3 +4,5 @@ inventory-prod.yml
 swarm.yaml
 vars/secrets.yml
 roles/clowder-swarm-setup/vars/main.yml
+vars/secrets_dev.yml
+vars/secrets_prod.yml
