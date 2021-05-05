@@ -15,6 +15,16 @@
     state: installed
   when: ansible_distribution == 'CentOS'
 
+- name: ldap.conf
+  template:
+    src: ldap.conf.j2
+    dest: "/etc/ldap/ldap.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+  when: ansible_distribution == 'Ubuntu'
+
 - name: add auto.qriscloud
   template:
     src: auto.qcollections.j2
@@ -63,7 +73,7 @@
     backup: true
     force: true
 
-# - name: bring up autofs 
-#   service: 
-#     name: autofs
-#     state: restarted
+- name: bring up autofs 
+  service: 
+    name: autofs
+    state: restarted

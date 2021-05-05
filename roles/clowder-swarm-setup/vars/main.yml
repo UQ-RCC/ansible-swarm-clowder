@@ -44,7 +44,7 @@ bioformat_extractor_image: uqrcc/bioformat-extractor:0.10
 
 ### ppms
 ppms_extra_profile_action: Report76
-ppms_storage_field: RawDataCollection
+ppms_storage_field: 'UQRDM Collection #'
 ppms_sync_mins: 10080 #  7 day
 ppms_starting_pid: 900
 ppms_default_securesocial: cilogon

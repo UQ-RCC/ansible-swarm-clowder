@@ -8,4 +8,5 @@ autofs_entry_attribute: "cn"
 autofs_value_attribute: "automountInformation"
 
 ldap_usetls: "yes"
-ldap_tlsrequired: "yes"
+ldap_tlsrequired: "no"
+ldap_authrequired: "simple"
