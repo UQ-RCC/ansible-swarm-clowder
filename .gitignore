@@ -3,3 +3,5 @@ inventory-dev.yml
 inventory-prod.yml
 swarm.yaml
 vars/secrets.yml
+vars/secrets_dev.yml
+vars/secrets_prod.yml
