@@ -15,6 +15,11 @@
       state: absent
       name: "es"
 
+  - name: delete q collections volume
+    docker_volume:
+      name: qcollections_volume
+      state: absent
+      
   - name: sleep to wait things to calmn down 
     pause:
       seconds: 30
