@@ -19,6 +19,11 @@
     pause:
       seconds: 30
 
+  - name: delete q collections volume
+    docker_volume:
+      name: qcollections_volume
+      state: absent
+
   - name: bring network down
     retries: 3
     delay: 3

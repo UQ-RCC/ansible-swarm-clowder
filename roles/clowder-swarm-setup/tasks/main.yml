@@ -89,14 +89,14 @@
 #       o: bind
 #       type: none
 #       device: /mnt/clowder
-# - name: create q collections volume
-#   docker_volume:
-#     name: qcollections_volume
-#     driver: local
-#     driver_options:
-#       o: bind
-#       type: none
-#       device: /data  
+- name: create q collections volume
+  docker_volume:
+    name: qcollections_volume
+    driver: local
+    driver_options:
+      o: bind
+      type: none
+      device: /data  
 # - name: create rabbitmq volume
 #   docker_volume:
 #     name: rabbitmq_volume
@@ -294,7 +294,7 @@
                 - "traefik.frontend.rule={{ traefik_host }}PathPrefix: {{ clowder_context }}"
               volumes:
                 - /clowder_data/:/home/clowder/data
-                - /data:/data
+                - qcollections_volume:/data
                 - /custom.conf:/home/clowder/custom/custom.conf
                 - /custom.play.plugins:/home/clowder/custom/play.plugins
               deploy:
@@ -425,7 +425,7 @@
             #     restart_policy:
             #       condition: on-failure
             #   volumes:
-            #     - /data:/data
+            #     - qcollections_volume:/data
 
             # extract preview image
             imagepreview:
@@ -444,7 +444,7 @@
                 restart_policy:
                   condition: on-failure
               volumes:
-                - /data:/data
+                - qcollections_volume:/data
 
             # extract image metadata
             imagemetadata:
@@ -463,61 +463,61 @@
                 restart_policy:
                   condition: on-failure
               volumes:
-                - /data:/data
+                - qcollections_volume:/data
 
             # extract preview image from audio spectrogram
-            audiopreview:
-              image: "{{ audiopreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-              volumes:
-                - /data:/data
+            # audiopreview:
+            #   image: "{{ audiopreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #   volumes:
+            #     - qcollections_volume:/data
 
             # extract pdf preview image
-            pdfpreview:
-              image: "{{ pdfpreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-              volumes:
-                - /data:/data
+            # pdfpreview:
+            #   image: "{{ pdfpreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #   volumes:
+            #     - qcollections_volume:/data
 
             # extract video preview image as well as smaller video
-            videopreview:
-              image: "{{ videopreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-              volumes:
-                - /data:/data
+            # videopreview:
+            #   image: "{{ videopreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #   volumes:
+            #     - qcollections_volume:/data
 
             hyperspy-dm3:
               image: "{{ hyperspydm3_image }}"
@@ -535,7 +535,7 @@
                 restart_policy:
                   condition: on-failure
               volumes:
-                - /data:/data
+                - qcollections_volume:/data
 
 
             bioformat-extractor:
@@ -554,10 +554,13 @@
                 restart_policy:
                   condition: on-failure
               volumes:
-                - /data:/data
+                - qcollections_volume:/data
 
           networks:
             clowder:
+              external: true
+          volumes:
+            qcollections_volume:
               external: true
 
   when: inventory_hostname == groups['SwarmMaster'][0] 
