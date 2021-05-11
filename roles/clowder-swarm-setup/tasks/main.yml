@@ -35,6 +35,12 @@
       path: /mnt/portainer
       state: directory
       mode: '0755'
+  - name: xapi
+    file:
+      path: /clowder_data/xapi-data
+      state: directory
+      mode: '0755'
+
   when: inventory_hostname in groups['SwarmSlave']
 
 - block:
@@ -149,6 +155,14 @@
     backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
 
+- name: copy pitschixapi.conf
+  template:
+    src: "pitschixapi.conf.j2"
+    dest: "/pitschixapi.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+    
 - block:
   - name: create a network for all clowder setup
     docker_network:
@@ -599,6 +613,53 @@
                     - node.role != manager
               volumes:
                 - qcollections_volume:/data
+
+            ### xapi
+            # ----------------------------------------------------------------------
+            # Postgres DB
+            # ----------------------------------------------------------------------
+            xapidb:
+              image: postgres:12.6
+              restart: unless-stopped
+              networks:
+                - clowder
+              environment:
+                - POSTGRES_USER={{ xapi_user }}
+                - POSTGRES_PASSWORD={{ xapi_pass }}
+                - POSTGRES_DB={{ xapi_db }}
+              volumes:
+                - /clowder_data/xapi-data:/var/lib/postgresql/data
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+
+            xapi:
+              image: uqrcc/pitschi-xapi:latest
+              restart: unless-stopped
+              networks:
+                - clowder
+              depends_on:
+                - xapidb
+              command: ["uvicorn", "pitschi.main:pitschixapi", "--host", "0.0.0.0", "--port", "80", "--root-path", "/xapi"]
+              volumes:
+                - /pitschixapi.conf:/etc/pitschi/conf/pitschixapi.conf
+              deploy:
+                mode: replicated
+                replicas: 1
+                # endpoint_mode: dnsrr
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=pitschixapi"
+                  - "traefik.port=80"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /xapi"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
 
           networks:
             clowder:

@@ -1,0 +1,29 @@
+[database]
+type=postgresql
+host=xapidb
+username={{ xapi_user }}
+password={{ xapi_pass }}
+name={{ xapi_db }}
+
+[email]
+username=
+password=
+smtp_server=
+smtp_port=
+
+[logging]
+log_file=/var/log/pitschi-xapi.log
+
+[ppms]
+ppms_url={{ ppms_url }}
+api2_key={{ ppms_api2_key }}
+ppms_key={{ ppms_puma_key }}
+qcollection_action={{ ppms_extra_profile_action }}
+q_collection_field={{ ppms_storage_field }}
+
+[clowder]
+api="{{ clowder_admin_key }}"
+
+[admin]
+admin_username={{ pxapi_admin }}
+admin_password={{ pxapi_password }}
