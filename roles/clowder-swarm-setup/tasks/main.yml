@@ -44,6 +44,7 @@
     path: /clowder_data/xapi-data
     state: directory
     mode: '0755'
+  ignore_errors: True
 
 #### volumes for docker #############
 # - name: create 
