@@ -592,7 +592,7 @@
                   condition: on-failure
 
             xapi:
-              image: uqrcc/pitschi-xapi:latest
+              image: "{{ pitschi_xapi_image }}"
               restart: unless-stopped
               networks:
                 - clowder
