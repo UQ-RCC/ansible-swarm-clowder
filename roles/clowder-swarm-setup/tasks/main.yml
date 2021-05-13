@@ -41,10 +41,9 @@
     mode: '0755'
 - name: xapi
   file:
-    path: /clowder_data/xapi-data
+    path: /mnt/xapi-data
     state: directory
     mode: '0755'
-  ignore_errors: True
 
 #### volumes for docker #############
 # - name: create 
@@ -226,6 +225,10 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
+
+  - name: add a label to the first slave node
+    command: docker node update --label-add xapidb=true {{ groups['SwarmSlave'][0] }}
+    when: inventory_hostname == groups['SwarmMaster'][0]
 
   - name: sleep to wait things to calmn down 
     pause:
@@ -585,12 +588,15 @@
                 - POSTGRES_PASSWORD={{ xapi_pass }}
                 - POSTGRES_DB={{ xapi_db }}
               volumes:
-                - /clowder_data/xapi-data:/var/lib/postgresql/data
+                - /mnt/xapi-data:/var/lib/postgresql/data
               deploy:
                 mode: replicated
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.labels.xapidb == true
 
             xapi:
               image: "{{ pitschi_xapi_image }}"

@@ -40,6 +40,10 @@
       state: present
       update_cache: yes
 
+  - name: Set timezone to Australia/Brisbane
+    timezone:
+      name: Australia/Brisbane
+
   - name: Add Docker GPG key
     apt_key: url=https://download.docker.com/linux/ubuntu/gpg
 
