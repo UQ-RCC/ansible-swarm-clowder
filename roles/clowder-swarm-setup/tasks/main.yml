@@ -226,9 +226,9 @@
       force: "yes"
       backup: "yes"
 
-  - name: add a label to the first slave node
-    command: docker node update --label-add xapidb=true {{ groups['SwarmSlave'][0] }}
-    when: inventory_hostname == groups['SwarmMaster'][0]
+  # - name: add a label to the first slave node
+  #   command: docker node update --label-add xapidb=true {{ groups['SwarmSlave'][0] }}
+  #   when: inventory_hostname == groups['SwarmMaster'][0]
 
   - name: sleep to wait things to calmn down 
     pause:
@@ -596,7 +596,7 @@
                   condition: on-failure
                 placement:
                   constraints:
-                    - node.labels.xapidb == true
+                    - node.hostname=={{ groups['SwarmSlave'][0] }}
 
             xapi:
               image: "{{ pitschi_xapi_image }}"
