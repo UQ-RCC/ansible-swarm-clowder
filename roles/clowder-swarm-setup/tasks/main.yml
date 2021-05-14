@@ -636,7 +636,7 @@
                   condition: on-failure
                 placement:
                   constraints:
-                    - node.hostname == "{{ groups['SwarmMaster'][0] }}"
+                    - node.hostname == "{{ groups['SwarmSlave'][0] }}"
 
             xapi:
               image: uqrcc/pitschi-xapi:latest
