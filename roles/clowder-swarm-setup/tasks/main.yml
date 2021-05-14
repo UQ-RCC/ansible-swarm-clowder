@@ -620,7 +620,6 @@
             # ----------------------------------------------------------------------
             xapidb:
               image: postgres:12.6
-              restart: unless-stopped
               networks:
                 - clowder
               environment:
@@ -636,11 +635,10 @@
                   condition: on-failure
                 placement:
                   constraints:
-                    - node.hostname == "{{ groups['SwarmSlave'][0] }}"
+                    - node.hostname=={{ groups['SwarmSlave'][0] }}
 
             xapi:
               image: uqrcc/pitschi-xapi:latest
-              restart: unless-stopped
               networks:
                 - clowder
               depends_on:
