@@ -6,7 +6,7 @@ mongo_image: mongo:3.6-xenial
 # traefik configs
 traefik_image: traefik:1.7
 # clowder
-clowder_image: uqrcc/clowder:pitschi1.16.1
+clowder_image: uqrcc/clowder:pitschi1.16.2
 clowder_register: 'false'
 clowder_context: /
 clowder_ssl: 'true'
@@ -39,7 +39,7 @@ pdfpreview_image: clowder/extractors-pdf-preview:latest
 videopreview_image: clowder/extractors-video-preview:latest
 hyperspydm3_image: uqrcc/dm3-extractor:1.0
 bioformat_extractor_image: uqrcc/bioformat-extractor:1.2
-pitschi_xapi_image: uqrcc/pitschi-xapi:0.5
+pitschi_xapi_image: uqrcc/pitschi-xapi:0.7
 pitschi_xapi_db_image: postgres:12.6
 
 

@@ -127,23 +127,38 @@
 #       device: /mnt/portainer
 
 ####### copy configs ###########
-- name: copy custom.play.plugins
-  template:
-    src: "custom.play.plugins.j2"
-    dest: "/custom.play.plugins"
-    mode: '0755'
-    force: "yes"
-    backup: "yes"
-
+- block:
+  - name: copy custom.play.plugins
+    template:
+      src: "custom.play.plugins.j2"
+      dest: "/custom.play.plugins"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy pitschixapi.conf
+    template:
+      src: "pitschixapi.conf.j2"
+      dest: "/pitschixapi.conf"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
   when: inventory_hostname == groups['SwarmSlave'][0]
 
-- name: copy custom play plugsin without ppms 
-  template:
-    src: "custom.play.plugins.withoutppms.j2"
-    dest: "/custom.play.plugins"
-    mode: '0755'
-    force: "yes"
-    backup: "yes"
+- block:
+  - name: copy custom play plugsin without ppms 
+    template:
+      src: "custom.play.plugins.withoutppms.j2"
+      dest: "/custom.play.plugins"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy pitschixapi.conf without syncing
+    template:
+      src: "pitschixapi_no_syncing.conf.j2"
+      dest: "/pitschixapi.conf"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
   when: inventory_hostname != groups['SwarmSlave'][0]
 
 - name: copy custom.conf
@@ -155,14 +170,7 @@
     backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
 
-- name: copy pitschixapi.conf
-  template:
-    src: "pitschixapi.conf.j2"
-    dest: "/pitschixapi.conf"
-    mode: '0755'
-    force: "yes"
-    backup: "yes"
-    
+
 - block:
   - name: create a network for all clowder setup
     docker_network:
@@ -619,7 +627,7 @@
             # Postgres DB
             # ----------------------------------------------------------------------
             xapidb:
-              image: postgres:12.6
+              image: "{{ pitschi_xapi_db_image }}"
               networks:
                 - clowder
               environment:
@@ -638,7 +646,7 @@
                     - node.hostname=={{ groups['SwarmSlave'][0] }}
 
             xapi:
-              image: uqrcc/pitschi-xapi:latest
+              image: "{{ pitschi_xapi_image }}"
               networks:
                 - clowder
               depends_on:
@@ -647,8 +655,7 @@
               volumes:
                 - /pitschixapi.conf:/etc/pitschi/conf/pitschixapi.conf
               deploy:
-                mode: replicated
-                replicas: 1
+                mode: global
                 # endpoint_mode: dnsrr
                 restart_policy:
                   condition: on-failure
@@ -661,6 +668,9 @@
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.webservice.frontend.entryPoints=https"
+                placement:
+                  constraints:
+                    - node.role != manager
 
           networks:
             clowder:
