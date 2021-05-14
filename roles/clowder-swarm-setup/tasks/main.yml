@@ -37,7 +37,7 @@
       mode: '0755'
   - name: xapi
     file:
-      path: /clowder_data/xapi-data
+      path: /mnt/xapi-data
       state: directory
       mode: '0755'
 
@@ -628,12 +628,15 @@
                 - POSTGRES_PASSWORD={{ xapi_pass }}
                 - POSTGRES_DB={{ xapi_db }}
               volumes:
-                - /clowder_data/xapi-data:/var/lib/postgresql/data
+                - /mnt/xapi-data:/var/lib/postgresql/data
               deploy:
                 mode: replicated
                 replicas: 1
                 restart_policy:
                   condition: on-failure
+                placement:
+                  constraints:
+                    - node.hostname == "{{ groups['SwarmMaster'][0] }}"
 
             xapi:
               image: uqrcc/pitschi-xapi:latest

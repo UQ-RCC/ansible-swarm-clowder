@@ -77,23 +77,7 @@
     - vars/secrets.yml
   tasks:
   - include_vars: vars/vars.yml
-  ######################################################
-  ### starts temporary part #####    
-  ##### remove this when qcollections autofs works
-  # - name: create mount point
-  #   file: 
-  #     path: /data/Q3504/
-  #     state: directory
-  #     mode: '0755'
 
-  # - name: mount Q3505
-  #   mount:
-  #     path: /data/Q3504/
-  #     src: 10.255.122.28:/gpfs/UQ02/collections/Q3504/Q3504
-  #     fstype: nfs
-  #     opts: rw,nosuid,nodev,relatime,vers=4,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=15,retrans=5,sec=sys,local_lock=none
-  #     state: mounted
-  ### end temporary part #####    
   ##########################################    
   roles:
     - { role: qcollections }
