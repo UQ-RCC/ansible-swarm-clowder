@@ -15,6 +15,7 @@ smtp_port=
 log_file=/var/log/pitschi-xapi.log
 
 [ppms]
+syncing_ppms=yes
 ppms_url={{ ppms_url }}
 api2_key={{ ppms_api2_key }}
 ppms_key={{ ppms_puma_key }}
@@ -24,8 +25,13 @@ booking_query=Report39
 coreid=2
 timezone=Australia/Brisbane
 booking_query_frequency=15
+
+[rdm]
+prefix=/data
+
 [clowder]
-api="{{ clowder_admin_key }}"
+api_url="https://{{ clowder_host }}/api"
+api_key="{{ clowder_admin_key }}"
 
 [admin]
 admin_username={{ pxapi_admin }}
