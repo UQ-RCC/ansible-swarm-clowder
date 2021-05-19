@@ -142,7 +142,7 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  when: inventory_hostname == groups['SwarmSlave'][0]
+  when: inventory_hostname==groups['SwarmSlave'][0]
 
 - block:
   - name: copy custom play plugsin without ppms 
@@ -159,7 +159,7 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  when: inventory_hostname != groups['SwarmSlave'][0]
+  when: inventory_hostname!=groups['SwarmSlave'][0] and inventory_hostname in groups['SwarmSlave']
 
 - name: copy custom.conf
   template:
