@@ -608,6 +608,7 @@
               command: ["uvicorn", "pitschi.main:pitschixapi", "--host", "0.0.0.0", "--port", "80", "--root-path", "/xapi"]
               volumes:
                 - /pitschixapi.conf:/etc/pitschi/conf/pitschixapi.conf
+                - qcollections_volume:/data
               deploy:
                 mode: replicated
                 replicas: 1
