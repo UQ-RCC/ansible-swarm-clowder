@@ -24,10 +24,16 @@ q_collection_field={{ ppms_storage_field }}
 booking_query=Report39
 coreid=2
 timezone=Australia/Brisbane
-booking_query_frequency=15
+booking_query_frequency=4
+
+[rdm]
+prefix=/data
 
 [clowder]
-api="{{ clowder_admin_key }}"
+api_url=https://{{ clowder_host }}/api
+api_key={{ clowder_admin_key }}
+ingesting=yes
+ingest_frequency=5
 
 [admin]
 admin_username={{ pxapi_admin }}
