@@ -446,23 +446,23 @@
             #     - qcollections_volume:/data
 
             # extract preview image
-            #imagepreview:
-            #  image: "{{ imagepreview_image }}"
-            #  networks:
-            #    - clowder
-            #  depends_on:
-            #    - rabbitmq
-            #    - clowder
-            #  environment:
-            #    - RABBITMQ_URI={{ rabbitmq_uri }}
-            #  deploy:
-            #    # mode: global
-            #    mode: replicated
-            #    replicas: 1
-            #    restart_policy:
-            #      condition: on-failure
-            #  volumes:
-            #    - qcollections_volume:/data
+            imagepreview:
+             image: "{{ imagepreview_image }}"
+             networks:
+               - clowder
+             depends_on:
+               - rabbitmq
+               - clowder
+             environment:
+               - RABBITMQ_URI={{ rabbitmq_uri }}
+             deploy:
+               # mode: global
+               mode: replicated
+               replicas: 1
+               restart_policy:
+                 condition: on-failure
+             volumes:
+               - qcollections_volume:/data
 
             # extract image metadata
             imagemetadata:
