@@ -6,10 +6,11 @@ password={{ xapi_pass }}
 name={{ xapi_db }}
 
 [email]
-username=
-password=
-smtp_server=
-smtp_port=
+username={{ pitschi_username }}
+address={{ pitschi_address }}
+password={{ pitschi_password }}
+smtp_server={{ pitschi_smtp_server }}
+smtp_port={{ pitschi_smtp_port }}
 
 [logging]
 log_file=/var/log/pitschi-xapi.log
@@ -24,10 +25,18 @@ q_collection_field={{ ppms_storage_field }}
 booking_query=Report39
 coreid=2
 timezone=Australia/Brisbane
-booking_query_frequency=15
+booking_query_frequency=10
+
+[rdm]
+prefix=/data
 
 [clowder]
-api="{{ clowder_admin_key }}"
+url=https://{{ clowder_host }}
+api_url=https://{{ clowder_host }}/api
+api_key={{ clowder_admin_key }}
+ingesting=no
+ingest_frequency=15
+wait_time_to_sync=24
 
 [admin]
 admin_username={{ pxapi_admin }}

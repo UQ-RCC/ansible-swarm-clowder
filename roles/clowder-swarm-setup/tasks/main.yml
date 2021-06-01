@@ -256,6 +256,10 @@
   - name: init mongo
     command: docker run --name mongoinit --network=clowder --rm -v /init_mongo.sh:/init_mongo.sh mongo:3.6-xenial "/init_mongo.sh"
 
+  - name: sleep for another 20 seconds 
+    pause:
+      seconds: 20
+
   # - name: create the rest
   - name: create the rest of clowder stack
     docker_stack:
