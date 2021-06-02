@@ -135,9 +135,9 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  - name: copy pitschixapi.conf
+  - name: copy pitschixapi_ingest_no_sync.conf.j2
     template:
-      src: "pitschixapi.conf.j2"
+      src: "pitschixapi_ingest_no_sync.conf.j2"
       dest: "/pitschixapi.conf"
       mode: '0755'
       force: "yes"
@@ -152,14 +152,25 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  - name: copy pitschixapi.conf without syncing
-    template:
-      src: "pitschixapi_no_syncing.conf.j2"
-      dest: "/pitschixapi.conf"
-      mode: '0755'
-      force: "yes"
-      backup: "yes"
   when: inventory_hostname!=groups['SwarmSlave'][0] and inventory_hostname in groups['SwarmSlave']
+
+- name: copy pitschixapi_no_ingest_sync.conf.j2
+  template:
+    src: "pitschixapi_no_ingest_sync.conf.j2"
+    dest: "/pitschixapi.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+  when: inventory_hostname==groups['SwarmSlave'][1]
+
+- name: copy pitschixapi_no_ingest_no_syncing.conf.j2
+  template:
+    src: "pitschixapi_no_ingest_no_syncing.conf.j2"
+    dest: "/pitschixapi.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+  when: inventory_hostname==groups['SwarmSlave'][2]
 
 - name: copy custom.conf
   template:
@@ -658,6 +669,7 @@
               command: ["uvicorn", "pitschi.main:pitschixapi", "--host", "0.0.0.0", "--port", "80", "--root-path", "/xapi"]
               volumes:
                 - /pitschixapi.conf:/etc/pitschi/conf/pitschixapi.conf
+                - qcollections_volume:/data
               deploy:
                 mode: global
                 # endpoint_mode: dnsrr
