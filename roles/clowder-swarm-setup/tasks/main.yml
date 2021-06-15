@@ -683,6 +683,7 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.entryPoints.http.whiteList.sourceRange={{ xapi_ip_filters }}"
                   - "traefik.webservice.frontend.entryPoints=https"
                 placement:
                   constraints:
