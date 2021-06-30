@@ -1,6 +1,7 @@
 inventory.yml
 inventory-dev.yml
 inventory-prod.yml
+xxapi_inventory.yml
 swarm.yaml
 vars/secrets.yml
 vars/secrets_dev.yml

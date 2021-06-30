@@ -1,0 +1,42 @@
+---
+- hosts: '*'
+  become: yes
+  vars:
+    host_key_checking: False
+  vars_files:
+    - vars/secrets.yml
+  tasks:
+  - block:
+    - name: update apt cache [ubuntu]
+      apt: upgrade=dist update_cache=yes
+    - name: install packages [ubuntu]
+      apt:
+        name:
+          - python3-pip
+          - git
+          - htop
+          - vim
+        state: present
+    when: ansible_distribution == "Ubuntu"
+  - block:
+    - name: enable epel [centos]
+      yum: name=epel-release state=present
+    - name: update system [centos]
+      yum: name='*' state=latest
+    - name: install packages [centos]
+      yum:
+        name:
+          - python-pip
+          - git
+          - htop
+        state: latest
+    when: ansible_distribution == 'CentOS'
+
+  roles:
+    # - { role: apt-get-upgrade }
+    # - { role: base }
+    - { role: xxapi-setup }
+    
+
+
+

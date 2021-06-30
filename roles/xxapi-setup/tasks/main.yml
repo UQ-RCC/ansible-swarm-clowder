@@ -1,0 +1,146 @@
+---
+- name: copy pitschixapi.conf.j2
+  template:
+    src: "pitschixapi.conf.j2"
+    dest: "/pitschixapi.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
+- name: create a network for clowder setup
+  docker_network:
+    name: clowder
+    scope: global
+    driver: "overlay"
+    attachable: "yes"
+    ipam_config:
+      - subnet: 17.7.0.0/16
+
+- block:
+  - name: data for traefik
+    file:
+      path: /mnt/traefik
+      state: directory
+      mode: '0755'
+  - name: data for xapi-data
+    file:
+      path: /mnt/xapi-data
+      state: directory
+      mode: '0755'
+
+- name: init swarm
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ hostvars[inventory_hostname]['ansible_ssh_host'] }}"
+    tls: yes
+    validate_certs: yes
+  register: result
+
+- name: create the rest of clowder stack
+  docker_stack:
+    name: "xapi"
+    compose:
+      - version: "3.5"
+        services: 
+          ################ traefik
+          traefik:
+            image: "{{ traefik_image }}"
+            command:
+              - "--api"
+              # Entrypoints
+              - "--defaultentrypoints=https,http"
+              - "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https"
+              - "--entryPoints=Name:https Address::443 TLS"
+              # Configuration for acme (https://letsencrypt.org/)
+              - "--acme"
+              - "--acme.storage=/config/acme.json"
+              - "--acme.entrypoint=https"
+              - "--acme.httpChallenge.entryPoint=http"
+              - "--acme.onhostrule=true"
+              - "--acme.onDemand=false"
+              #- --acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+              - "--acme.email={{ traefik_acme_email }}"
+              - --acme.acmelogging=true
+              # DOCKER
+              - "--docker"
+              - "--docker.swarmmode"
+              - "--docker.exposedbydefault=false"
+              - "--docker.watch"
+              - "--docker.network=clowder"
+              - "--loglevel=DEBUG"
+            networks:
+              - clowder
+            ports:
+              - "80:80"
+              - "443:443"
+            volumes:
+              - /var/run/docker.sock:/var/run/docker.sock
+              - /mnt/traefik:/config
+            deploy:
+              mode: replicated
+              replicas: 1
+              update_config:
+                parallelism: 1
+                delay: 10s
+              restart_policy:
+                condition: on-failure
+              labels:
+                - "traefik.enable=true"
+                - "traefik.backend=traefik"
+                - "traefik.port=8080"
+                - "traefik.docker.network=clowder"
+                - "traefik.frontend.rule=Host:{{ inventory_hostname }}.rcc.uq.edu.au;PathPrefixStrip: /traefik"
+                - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
+                - "traefik.redirectorservice.frontend.entryPoints=http"
+                - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                - "traefik.webservice.frontend.entryPoints=https"
+
+          ### xapi
+          # ----------------------------------------------------------------------
+          # Postgres DB
+          # ----------------------------------------------------------------------
+          xapidb:
+            image: "{{ pitschi_xapi_db_image }}"
+            networks:
+              - clowder
+            environment:
+              - POSTGRES_USER={{ xapi_user }}
+              - POSTGRES_PASSWORD={{ xapi_pass }}
+              - POSTGRES_DB={{ xapi_db }}
+            volumes:
+              - /mnt/xapi-data:/var/lib/postgresql/data
+            deploy:
+              mode: replicated
+              replicas: 1
+              restart_policy:
+                condition: on-failure
+
+          xapi:
+            image: "{{ pitschi_xapi_image }}"
+            networks:
+              - clowder
+            depends_on:
+              - xapidb
+            command: ["uvicorn", "pitschi.main:pitschixapi", "--host", "0.0.0.0", "--port", "80", "--root-path", "/xapi"]
+            volumes:
+              - /pitschixapi.conf:/etc/pitschi/conf/pitschixapi.conf
+            deploy:
+              mode: replicated
+              replicas: 1
+              restart_policy:
+                condition: on-failure
+              labels:
+                - "traefik.enable=true"
+                - "traefik.backend=pitschixapi"
+                - "traefik.port=80"
+                - "traefik.frontend.rule=Host:{{ inventory_hostname }}.rcc.uq.edu.au;PathPrefixStrip: /xapi"
+                - "traefik.docker.network=clowder"
+                - "traefik.redirectorservice.frontend.entryPoints=http"
+                - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                - "traefik.entryPoints.http.whiteList.sourceRange={{ xapi_ip_filters }}"
+                - "traefik.webservice.frontend.entryPoints=https"
+
+        networks:
+          clowder:
+            external: true
+        

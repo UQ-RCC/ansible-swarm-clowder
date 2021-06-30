@@ -6,7 +6,7 @@ mongo_image: mongo:3.6-xenial
 # traefik configs
 traefik_image: traefik:1.7
 # clowder
-clowder_image: uqrcc/clowder:pitschi1.16.2
+clowder_image: uqrcc/clowder:latest
 clowder_register: 'false'
 clowder_context: /
 clowder_ssl: 'true'

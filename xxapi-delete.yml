@@ -1,0 +1,10 @@
+---
+- hosts: '*'
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - name: delete stack
+    docker_stack:
+      state: absent
+      name: "xapi"

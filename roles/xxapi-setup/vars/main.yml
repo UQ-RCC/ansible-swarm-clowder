@@ -1,0 +1,15 @@
+---
+# traefik configs
+traefik_image: traefik:1.7
+
+
+pitschi_xapi_image: uqrcc/pitschi-xapi:latest
+pitschi_xapi_db_image: postgres:12.6
+
+
+### ppms
+ppms_extra_profile_action: Report75
+ppms_storage_field: 'UQRDM Collection #'
+ppms_sync_mins: 10080 #  7 day
+ppms_starting_pid: 1100
+ppms_default_securesocial: cilogon

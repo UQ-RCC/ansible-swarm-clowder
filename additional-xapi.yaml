@@ -1,0 +1,100 @@
+heat_template_version: 2016-10-14
+description: additional xapi nodes
+
+parameters:
+  ansible_host_group: 
+   type: string
+   default: xapi
+  node_image_id:
+    type: string
+    default: 03433e1b-d092-40eb-bbce-cd3842899001
+    constraints:
+      - custom_constraint: glance.image
+  node_initial_user:
+    type: string
+    default: ubuntu
+  ansible_user:
+    type: string
+    default: ubuntu
+  ssh_key_name:
+    type: string
+    default: calliope
+    constraints:
+      - custom_constraint: nova.keypair
+  project_name:
+    type: string
+    default: dev
+  node_flavour:
+    type: string
+    default: m3.small
+    constraints:
+      - custom_constraint: nova.flavor  
+
+resources:
+  cloud_init_config:
+    type: 'OS::Heat::CloudConfig'
+    properties:
+      cloud_config:
+        disable_root: false
+        manage_resolv_conf: false
+        timezone: Australia/Brisbane
+        cloud_init_modules:
+          - migrator
+          - seed_random
+          - bootcmd
+          - write-files
+          - growpart
+          - resizefs
+          - disk_setup
+          - mounts
+          - ca-certs
+          - rsyslog
+          - users-groups
+          - ssh
+  
+  server_init:
+    type: 'OS::Heat::MultipartMime'
+    properties:
+      parts:
+        - config: { get_resource: cloud_init_config }
+  
+  ##
+  xapi1:
+    type: OS::Nova::Server
+    properties:
+      name: xxapi1
+      availability_zone: 'tasmania-02'
+      networks:
+        - allocate_network: auto
+      image: { get_param: node_image_id }
+      flavor: { get_param: node_flavour }
+      key_name: { get_param: ssh_key_name }
+      security_groups: [default]
+      user_data_format: RAW
+      user_data:
+        get_resource: server_init
+      metadata:
+        ansible_host_groups: { get_param: ansible_host_group }
+        ansible_ssh_user: { get_param: ansible_user }
+        initial_ssh_user: { get_param: node_initial_user }
+        project_name: { get_param: project_name }
+
+  xapi2:
+    type: OS::Nova::Server
+    properties:
+      name: xxapi2
+      availability_zone: 'melbourne-qh2'
+      networks:
+        - allocate_network: auto
+      image: { get_param: node_image_id }
+      flavor: { get_param: node_flavour }
+      key_name: { get_param: ssh_key_name }
+      security_groups: [default]
+      user_data_format: RAW
+      user_data:
+        get_resource: server_init
+      metadata:
+        ansible_host_groups: { get_param: ansible_host_group }
+        ansible_ssh_user: { get_param: ansible_user }
+        initial_ssh_user: { get_param: node_initial_user }
+        project_name: { get_param: project_name }
