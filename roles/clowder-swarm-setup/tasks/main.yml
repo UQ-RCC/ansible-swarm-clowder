@@ -303,7 +303,7 @@
                 - "--docker.exposedbydefault=false"
                 - "--docker.watch"
                 - "--docker.network=clowder"
-                - "--loglevel=DEBUG"
+                - "--loglevel=ERROR"
               networks:
                 - clowder
               ports:
