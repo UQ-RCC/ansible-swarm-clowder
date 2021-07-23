@@ -5,7 +5,9 @@ allnodes_names: "{{ ( groups['SwarmMaster'] + groups['SwarmSlave'] ) | map('extr
 master_ips: "{{ groups['SwarmMaster'] | map('extract', hostvars, ['secondary-ip']) | list }}"
 total_nodes: "{{ groups['SwarmMaster'] | list | length + groups['SwarmSlave'] | list | length }}"
 
+total_master_nodes: "{{ master_ips|length }}"
+total_slave_nodes: "{{ groups['SwarmSlave'] | map('extract', hostvars, ['secondary-ip']) | list | length }}"
 gluster_brickmnt: /glusters
-gluster_replicas: 3
+gluster_replicas: "{{ total_slave_nodes }}"
 gluster_volmnt: /clowder_data/
 gluster_volname: gfs

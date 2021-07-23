@@ -44,6 +44,11 @@
     path: /mnt/xapi-data
     state: directory
     mode: '0755'
+- name: consul
+  file:
+    path: /mnt/consul
+    state: directory
+    mode: '0755'
 
 #### volumes for docker #############
 # - name: create 
@@ -248,8 +253,53 @@
       name: "clowder"
       compose:
         - version: "3.5"
-          services: 
-            ################ traefik
+          services:
+            consulmaster:
+              image: consul
+              command: agent -server -client=0.0.0.0 -bootstrap -ui
+              volumes:
+                - /mnt/consul:/consul/data
+              environment:
+                - CONSUL_BIND_INTERFACE=eth1
+                - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+              networks:
+                - clowder
+              deploy:
+                replicas: 1
+                placement:
+                  constraints:
+                    - node.hostname=={{ groups['SwarmMaster'][0] }}
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /consul"
+                  - "traefik.backend=consul"
+                  - traefik.enable=true
+                  - traefik.port=8500
+                  - traefik.docker.network=clowder
+                  - traefik.frontend.entryPoints=http,https
+                  - traefik.frontend.redirect.entryPoint=https
+                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
+
+            # consulreplica:
+            #   image: consul
+            #   command: agent -server -client=0.0.0.0 -retry-join="consulmaster"
+            #   volumes:
+            #     - /mnt/consul:/consul/data
+            #   environment:
+            #     - CONSUL_BIND_INTERFACE=eth0
+            #     - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+            #   networks:
+            #     - clowder
+            #   deploy:
+            #     replicas: 2
+            #     placement:
+            #       constraints:
+            #         - node.role == manager
+            #         - node.hostname!={{ groups['SwarmMaster'][0] }}
+            #   depends_on:
+            #     - consulmaster
+
             traefik:
               image: "{{ traefik_image }}"
               command:
@@ -258,9 +308,13 @@
                 - "--defaultentrypoints=https,http"
                 - "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https"
                 - "--entryPoints=Name:https Address::443 TLS"
+                # consul
+                - "--consul"
+                - "--consul.endpoint=consulmaster:8500"
                 # Configuration for acme (https://letsencrypt.org/)
                 - "--acme"
-                - "--acme.storage=/config/acme.json"
+                - --acme.storage="traefik/acme/account"
+                # - "--acme.storage=/config/acme.json"
                 - "--acme.entrypoint=https"
                 - "--acme.httpChallenge.entryPoint=http"
                 - "--acme.onhostrule=true"
@@ -303,6 +357,9 @@
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.webservice.frontend.entryPoints=https"
+                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
+              depends_on:
+                - consulmaster
 
 
             clowder:
@@ -560,23 +617,23 @@
             #    - qcollections_volume:/data
 
 
-            bioformat-extractor:
-              image: "{{ bioformat_extractor_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                # mode: global
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-              volumes:
-                - qcollections_volume:/data
+            # bioformat-extractor:
+            #   image: "{{ bioformat_extractor_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     # mode: global
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #   volumes:
+            #     - qcollections_volume:/data
             
             ### xapi
             # ----------------------------------------------------------------------
