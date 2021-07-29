@@ -1,0 +1,12 @@
+---
+- hosts: SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - name: reload autofs
+    service:
+      name: autofs
+      state: reloaded
+
+

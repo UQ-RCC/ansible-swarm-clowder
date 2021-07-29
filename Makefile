@@ -43,6 +43,9 @@ inventories: check-vars inventory.yml
 bootstrap: bootstrap.yml
 	ansible-playbook -i inventory.yml bootstrap.yml
 
+reloadautofs: autofs-reload.yml
+	ansible-playbook -i inventory.yml autofs-reload.yml
+
 init-swarm: init-swarm-cluster.yml
 	ansible-playbook -i inventory.yml init-swarm-cluster.yml
 
