@@ -41,7 +41,7 @@ hyperspydm3_image: tcnichol/hyperspy-dm3:2020.08.05
 bioformat_extractor_image: uqrcc/bioformat-extractor:1.0
 pitschi_xapi_image: uqrcc/pitschi-xapi:latest
 pitschi_xapi_db_image: postgres:12.6
-
+wdf_image: uqrcc/wdf-extractor:1.0
 ### ppms
 ppms_extra_profile_action: Report76
 ppms_storage_field: 'UQRDM Collection #'
