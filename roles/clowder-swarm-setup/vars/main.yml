@@ -40,7 +40,7 @@ pdfpreview_image: clowder/extractors-pdf-preview:latest
 videopreview_image: clowder/extractors-video-preview:latest
 hyperspydm3_image: uqrcc/dm3-extractor:1.0
 bioformat_extractor_image: uqrcc/bioformat-extractor:1.2
-pitschi_xapi_image: uqrcc/pitschi-xapi:1.3
+pitschi_xapi_image: uqrcc/pitschi-xapi:1.4
 pitschi_xapi_db_image: postgres:12.6
 
 
@@ -48,5 +48,5 @@ pitschi_xapi_db_image: postgres:12.6
 ppms_extra_profile_action: Report75
 ppms_storage_field: 'UQRDM Collection #'
 ppms_sync_mins: 10080 #  7 day
-ppms_starting_pid: 1100
+ppms_starting_pid: 30
 ppms_default_securesocial: cilogon
