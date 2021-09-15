@@ -11,7 +11,7 @@
     mode: '0755'
 - name: data for mongo
   file:
-    path: /mnt/mongo-data
+    path: /mongo-data
     state: directory
     mode: '0755'
 - name: config for mongo
@@ -209,7 +209,7 @@
               networks:
                 - clowder
               volumes:
-                - /mnt/mongo-data:/data/db
+                - /mongo-data:/data/db
                 - /mnt/mongo-configs:/data/configdb
               deploy:
                 mode: global
