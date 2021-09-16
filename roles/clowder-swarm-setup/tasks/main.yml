@@ -387,7 +387,7 @@
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.backend.loadbalancer.stickiness=true"
+                  - "traefik.backend.loadbalancer.stickiness=false"
                   - "traefik.frontend.auth.basic.users={{ traefik_user }}"
               depends_on:
                 - consulmaster
@@ -422,7 +422,7 @@
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.backend.loadbalancer.sticky=true"
+                  - "traefik.backend.loadbalancer.stickiness=true"
 
 
             ############### rabbit mq ##################
@@ -744,6 +744,8 @@
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.entryPoints.http.whiteList.sourceRange={{ xapi_ip_filters }}"
                   - "traefik.webservice.frontend.entryPoints=https"
+                  - "traefik.backend.loadbalancer.stickiness=false"
+                  - "traefik.backend.loadbalancer.method=drr"
                 placement:
                   constraints:
                     - node.role != manager
