@@ -1,11 +1,11 @@
 export SSH_KEY_NAME=calliope
-export STACK_NAME=dev
+export STACK_NAME=stage6
 export OS_PROJECT_NAME=CMM_Imagerepository
 export ANSIBLE_HOST_KEY_CHECKING=False
-export node_count_master=1
-export node_count_slave=1
+export node_count_master=3
+export node_count_slave=3
 export node_flavour_master=m3.small
-export node_flavour_slave=m3.small
+export node_flavour_slave=m3.medium
 
 
 source /home/hoangnguyen177/Desktop/working/RCC/nectar/CMM_Imagerepository-openrc.sh

@@ -26,7 +26,7 @@ parameters:
     default: {{ avail_zone }}
   project_name:
     type: string
-    default: dev
+    default: {{ project_name }}
   ##
   # Node Flavours
   ##
@@ -53,7 +53,15 @@ parameters:
   volume_size:
     type: number
     description: Size of the volume to be created.
-    default: 10
+    default: 60
+    constraints:
+      - range: { min: 1, max: 1024 }
+        description: must be between 1 and 1024 Gb.
+
+  volume_master_size:
+    type: number
+    description: Size of the volume to be created.
+    default: 3
     constraints:
       - range: { min: 1, max: 1024 }
         description: must be between 1 and 1024 Gb.
@@ -79,7 +87,7 @@ resources:
           avail_zone: { get_param: avail_zone }
           project_name: { get_param: project_name }
           node_flavour: { get_param: node_flavour_master }
-          volume_size: { get_param: volume_size }
+          volume_size: { get_param: volume_master_size }
       
 
   ##
@@ -100,6 +108,6 @@ resources:
           ssh_key_name: { get_param: ssh_key_name }
           avail_zone: { get_param: avail_zone }
           project_name: { get_param: project_name }
-          node_flavour: { get_param: node_flavour_master }
+          node_flavour: { get_param: node_flavour_slave }
           volume_size: { get_param: volume_size }
       

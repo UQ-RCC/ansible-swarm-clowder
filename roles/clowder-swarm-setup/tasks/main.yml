@@ -140,9 +140,9 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  - name: copy pitschixapi_ingest_no_sync.conf.j2
+  - name: copy pitschixapi_no_ingest_no_syncing.conf.j2
     template:
-      src: "pitschixapi_ingest_no_sync.conf.j2"
+      src: "pitschixapi_no_ingest_no_syncing.conf.j2"
       dest: "/pitschixapi.conf"
       mode: '0755'
       force: "yes"
@@ -168,9 +168,9 @@
     backup: "yes"
   when: inventory_hostname==groups['SwarmSlave'][1]
 
-- name: copy pitschixapi_no_ingest_no_syncing.conf.j2
+- name: copy pitschixapi_ingest_no_sync.conf.j2
   template:
-    src: "pitschixapi_no_ingest_no_syncing.conf.j2"
+    src: "pitschixapi_ingest_no_sync.conf.j2"
     dest: "/pitschixapi.conf"
     mode: '0755'
     force: "yes"
@@ -423,6 +423,7 @@
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
                   - "traefik.webservice.frontend.entryPoints=https"
                   - "traefik.backend.loadbalancer.stickiness=true"
+                  - "traefik.backend.loadbalancer.method=drr"
 
 
             ############### rabbit mq ##################

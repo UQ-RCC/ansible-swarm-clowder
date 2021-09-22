@@ -85,7 +85,7 @@ for s in servers:
 	hvars['initial_ssh_user'] = s.metadata['initial_ssh_user']
 	networks = s.networks.keys()
 	for network in networks:
-		if network == 'qld':
+		if network == 'qld' or network == 'qld-data':
 			hvars['ansible_ssh_host'] = s.networks['qld'][0]
 			hvars['secondary-ip'] = s.networks['qld-data'][0]
 		else:
