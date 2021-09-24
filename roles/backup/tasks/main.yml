@@ -1,0 +1,118 @@
+---
+- name: install 
+  apt: 
+    name:
+      - python3-swiftclient
+    state: present
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+#### file for backing up gluster
+- block:
+  - name: add backup gluster
+    template:
+      src: backup_gluster.sh.j2
+      dest: "/usr/bin/pitschi_backup_gluster.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup gluster
+    cron:
+      name: "pitschi backup gluster"
+      weekday: "0"
+      minute: "0"
+      hour: "1"
+      job: "/usr/bin/pitschi_backup_gluster.sh"
+  # in dev, all nodes participate in gluster cluster
+  when: inventory_hostname in groups['SwarmSlave']
+
+#### file for backing up xapi
+- block:
+  - name: add backup xapidb
+    template:
+      src: backup_xapidb.sh.j2
+      dest: "/usr/bin/pitschi_backup_xapidb.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup xapidb
+    cron:
+      name: "pitschibackup xapidb"
+      weekday: "0"
+      minute: "0"
+      hour: "2"
+      job: "/usr/bin/pitschi_backup_xapidb.sh"
+  when: inventory_hostname == groups['SwarmSlave'][0]
+
+#### file for backing up mongo
+- block:
+  - name: add backup mongo
+    template:
+      src: backup_mongo.sh.j2
+      dest: "/usr/bin/pitschi_backup_mongo.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup mongo
+    cron:
+      name: "pitschi backup mongo"
+      weekday: "0"
+      minute: "0"
+      hour: "3"
+      job: "/usr/bin/pitschi_backup_mongo.sh"
+  when: inventory_hostname == groups['SwarmSlave'][0]
+
+### rabbit mq
+- block:
+  - name: add backup rabbitmq
+    template:
+      src: backup_rabbitmq.sh.j2
+      dest: "/usr/bin/pitschi_backup_rabbitmq.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup rabbitmq
+    cron:
+      name: "pitschi backup rabbitmq"
+      weekday: "0"
+      minute: "0"
+      hour: "4"
+      job: "/usr/bin/pitschi_backup_rabbitmq.sh"
+  when: inventory_hostname in groups['SwarmSlave']
+
+### elasic cluster
+- block:
+  - name: add backup elastic cluster
+    template:
+      src: backup_es.sh.j2
+      dest: "/usr/bin/pitschi_backup_es.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup elastic
+    cron:
+      name: "pitschi backup elastic"
+      weekday: "0"
+      minute: "0"
+      hour: "5"
+      job: "/usr/bin/pitschi_backup_es.sh"
+  when: inventory_hostname in groups['SwarmSlave']
+
+### backup consul
+- block:
+  - name: add backup consul
+    template:
+      src: backup_consul.sh.j2
+      dest: "/usr/bin/pitschi_backup_consul.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: Backup consul
+    cron:
+      name: "pitschi backup consul"
+      weekday: "0"
+      minute: "30"
+      hour: "1"
+      job: "/usr/bin/pitschi_backup_consul.sh"
+  when: inventory_hostname in groups['SwarmMaster']
+

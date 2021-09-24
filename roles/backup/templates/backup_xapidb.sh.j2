@@ -1,0 +1,25 @@
+#!/bin/bash
+############################################
+# This script backs up the pitschi xapi database
+# Thisc script hsould be executed at any host where pitsxhi xapi is running
+
+backupcontainer=pitschi-{{ setup }}
+echo $backupcontainer
+containers=$(/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} list)
+found=false
+for container in $containers; do
+    if [[ "$container" == "$backupcontainer" ]] ; then
+        found=true
+    fi
+done
+if [ "$found" = false ]; then
+    /usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} post $backupcontainer
+fi
+
+###
+today=$(date '+%d-%m-%Y')
+filename="xapidb-{{ inventory_hostname }}.sql"
+# TODO: clowder_xapidb should not be hardcoded
+docker exec -it $(docker ps -q -f name=clowder_xapidb) pg_dump -c -d postgresql://{{ xapi_user }}:{{ xapi_pass }}@localhost/{{ xapi_db }} > "/tmp/${filename}"
+/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/tmp/${filename}" --object-name "${today}/${filename}"
+rm "/tmp/${filename}"

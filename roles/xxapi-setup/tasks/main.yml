@@ -7,14 +7,16 @@
     force: "yes"
     backup: "yes"
 
-- name: create a network for clowder setup
-  docker_network:
-    name: clowder
-    scope: global
-    driver: "overlay"
-    attachable: "yes"
-    ipam_config:
-      - subnet: 17.7.0.0/16
+# - name: create a network for clowder setup
+#   docker_network:
+#     name: clowder
+#     scope: global
+#     driver: "overlay"
+#     attachable: "yes"
+#     state: present
+#     appends: "yes"
+#     ipam_config:
+#       - subnet: 17.7.0.0/16
 
 - block:
   - name: data for traefik
