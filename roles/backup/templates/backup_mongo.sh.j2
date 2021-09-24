@@ -1,0 +1,29 @@
+#!/bin/bash
+############################################
+# This script 
+
+backupcontainer=pitschi-{{ setup }}
+echo $backupcontainer
+containers=$(/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} list)
+found=false
+for container in $containers; do
+    if [[ "$container" == "$backupcontainer" ]] ; then
+        found=true
+    fi
+done
+if [ "$found" = false ]; then
+    /usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} post $backupcontainer
+fi
+
+###
+today=$(date '+%d-%m-%Y')
+mkdir "/tmp/${today}"
+
+# TODO: mongo_mongo should not be hardcoded
+docker exec $(docker ps -q -f name=mongo_mongo) mongodump -o /mnt/ --uri="mongodb://mongo:27017/clowder?replicaSet=clowder"
+docker cp $(docker ps -q -f name=mongo_mongo):/mnt/clowder "/tmp/${today}"
+docker exec $(docker ps -q -f name=mongo_mongo) rm -rf /mnt/clowder
+
+tar cvfz "/tmp/${today}/mongo.tar.gz" "/tmp/${today}/clowder"
+/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/tmp/${today}/mongo.tar.gz" --object-name "${today}/mongo.tar.gz"
+rm -rf "/tmp/${today}"

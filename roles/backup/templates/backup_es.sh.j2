@@ -1,0 +1,23 @@
+#!/bin/bash
+############################################
+# This script backs up elasticsearch cluster
+
+backupcontainer=pitschi-{{ setup }}
+echo $backupcontainer
+containers=$(/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} list)
+found=false
+for container in $containers; do
+    if [[ "$container" == "$backupcontainer" ]] ; then
+        found=true
+    fi
+done
+if [ "$found" = false ]; then
+    /usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} post $backupcontainer
+fi
+
+###
+today=$(date '+%d-%m-%Y')
+zipped_file_name="es-data-{{ inventory_hostname }}.tar.gz"
+tar cvfz "/tmp/${zipped_file_name}" /mnt/es-data/
+/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/tmp/${zipped_file_name}" --object-name "${today}/${zipped_file_name}"
+rm "/tmp/${zipped_file_name}"
