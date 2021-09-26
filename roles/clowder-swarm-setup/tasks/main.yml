@@ -448,7 +448,8 @@
                   condition: on-failure
                 placement:
                   constraints:
-                    - node.role != manager
+                    # - node.role != manager
+                    - node.hostname=={{ groups['SwarmSlave'][1] }}
                 labels:
                   - "traefik.enable=true"
                   - "traefik.backend=rabbitmq"
@@ -696,6 +697,24 @@
                     - node.role != manager
               volumes:
                 - qcollections_volume:/data
+            
+            wdf:
+             image: "{{ wdf_image }}"
+             networks:
+               - clowder
+             depends_on:
+               - rabbitmq
+               - clowder
+             environment:
+               - RABBITMQ_URI={{ rabbitmq_uri }}
+             deploy:
+               # mode: global
+               mode: replicated
+               replicas: 1
+               restart_policy:
+                 condition: on-failure
+             volumes:
+               - qcollections_volume:/data
 
             ### xapi
             # ----------------------------------------------------------------------
