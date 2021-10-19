@@ -63,5 +63,9 @@ destroy-clowder: clowder.yml
 
 backup-clowder: clowder.yml
 	ansible-playbook -i inventory.yml clowder.yml --tags=backup
-	
+
+monitor: clowder.yml
+	ansible-playbook -i inventory.yml clowder.yml --tags=monitor
+
+
 .PHONY: check-vars clean stack inventories bootstrap inventory.yml init-swarm

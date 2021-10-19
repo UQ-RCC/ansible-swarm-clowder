@@ -135,7 +135,8 @@
 - block:
   - name: copy custom.play.plugins
     template:
-      src: "custom.play.plugins.j2"
+      src: "custom.play.plugins.withoutppms.j2"
+      # src: "custom.play.plugins.j2"
       dest: "/custom.play.plugins"
       mode: '0755'
       force: "yes"
