@@ -1,0 +1,17 @@
+#!/bin/bash
+############################################
+# This script monitor NFS @ each node. 
+# If there is problem, send a message to telegram
+DIR_TO_WATCH={{ nfs_dir_to_watch }}
+( ls ${DIR_TO_WATCH} ) & pid=$!
+( sleep {{ timeout }}  && kill -HUP $pid ) 2>/dev/null & watcher=$!
+if wait $pid 2>/dev/null; then
+    echo "Q collections mount ok"
+    pkill -HUP -P $watcher
+    wait $watcher
+else
+    echo "NFS mount problem. Notify telegram"
+    TELEGRAM_API_URL="https://api.telegram.org/bot{{ telegram_token }}/sendMessage"
+    hostname=$(hostname)
+    curl -s -X POST ${TELEGRAM_API_URL} -d chat_id={{ telegram_chat_group_id }} -d text="[NFS Problem]: Problem listing ${DIR_TO_WATCH}. Host: ${hostname}."
+fi

@@ -1,0 +1,26 @@
+---
+- name: install 
+  apt: 
+    name:
+      - python3-swiftclient
+    state: present
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+#### file for backing up gluster
+- block:
+  - name: add monitor nfs
+    template:
+      src: monitor_nfs.sh.j2
+      dest: "/usr/bin/monitor_nfs.sh"
+      owner: root
+      group: root
+      mode: 0700
+  - name: monitor NFS
+    cron:
+      name: "pitschi monitor NFS"
+      minute: "30"
+      job: "/usr/bin/monitor_nfs.sh"
+  # in dev, all nodes participate in gluster cluster
+  when: inventory_hostname in groups['SwarmSlave']
+

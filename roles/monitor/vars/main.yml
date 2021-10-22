@@ -1,0 +1,5 @@
+---
+# NFS dir to watch
+nfs_dir_to_watch: /data/Q3504/
+# timeout for list dir command - in seconds
+timeout: 30

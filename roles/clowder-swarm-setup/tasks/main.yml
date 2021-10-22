@@ -141,9 +141,9 @@
       mode: '0755'
       force: "yes"
       backup: "yes"
-  - name: copy pitschixapi_no_ingest_no_syncing.conf.j2
+  - name: copy pitschixapi_no_ingest_sync_project.conf.j2
     template:
-      src: "pitschixapi_no_ingest_no_syncing.conf.j2"
+      src: "pitschixapi_no_ingest_sync_project.conf.j2"
       dest: "/pitschixapi.conf"
       mode: '0755'
       force: "yes"
@@ -160,9 +160,9 @@
       backup: "yes"
   when: inventory_hostname!=groups['SwarmSlave'][0] and inventory_hostname in groups['SwarmSlave']
 
-- name: copy pitschixapi_no_ingest_sync.conf.j2
+- name: copy pitschixapi_no_ingest_sync_booking.conf.j2
   template:
-    src: "pitschixapi_no_ingest_sync.conf.j2"
+    src: "pitschixapi_no_ingest_sync_booking.conf.j2"
     dest: "/pitschixapi.conf"
     mode: '0755'
     force: "yes"

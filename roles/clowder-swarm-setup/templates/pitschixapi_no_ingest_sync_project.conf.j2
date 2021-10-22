@@ -16,7 +16,10 @@ smtp_port={{ pitschi_smtp_port }}
 log_file=/var/log/pitschi-xapi.log
 
 [ppms]
-syncing_ppms=yes
+syncing_ppms_project=no
+project_sync_day=7
+syncing_ppms_bookings=yes
+booking_sync_minute=7
 ppms_url={{ ppms_url }}
 api2_key={{ ppms_api2_key }}
 ppms_key={{ ppms_puma_key }}
@@ -25,7 +28,6 @@ q_collection_field={{ ppms_storage_field }}
 booking_query=Report39
 coreid=2
 timezone=Australia/Brisbane
-booking_query_frequency=8
 
 [rdm]
 prefix=/data
