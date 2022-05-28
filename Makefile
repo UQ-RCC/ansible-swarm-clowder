@@ -67,5 +67,6 @@ backup-clowder: clowder.yml
 monitor: clowder.yml
 	ansible-playbook -i inventory.yml clowder.yml --tags=monitor
 
-
+upgrade: upgrade.yml
+	ansible-playbook -i inventory.yml upgrade.yml
 .PHONY: check-vars clean stack inventories bootstrap inventory.yml init-swarm

@@ -4,6 +4,11 @@
   vars:
     host_key_checking: False
   tasks:
+  - name: start daemon
+    service:
+      name: glusterd
+      enabled: yes
+      state: restarted
   - name: reload autofs
     service:
       name: autofs
