@@ -1,0 +1,17 @@
+---
+- hosts: SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - name: stop daemon
+    service:
+      name: glusterd
+      enabled: yes
+      state: stopped
+  - name: stop autofs
+    service:
+      name: autofs
+      state: stopped
+
+

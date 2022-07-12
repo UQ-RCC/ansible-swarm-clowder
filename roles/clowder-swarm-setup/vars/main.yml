@@ -41,7 +41,7 @@ pdfpreview_image: clowder/extractors-pdf-preview:latest
 videopreview_image: clowder/extractors-video-preview:latest
 hyperspydm3_image: uqrcc/dm3-extractor:1.0
 bioformat_extractor_image: uqrcc/bioformat-extractor:1.2
-pitschi_xapi_image: uqrcc/pitschi-xapi:1.4.11
+pitschi_xapi_image: uqrcc/pitschi-xapi:1.5.12
 pitschi_xapi_db_image: postgres:12.6
 wdf_image: uqrcc/wdf-extractor:latest
 
