@@ -3,7 +3,7 @@
 traefik_image: traefik:1.7
 
 
-pitschi_xapi_image: uqrcc/pitschi-xapi:1.5.2
+pitschi_xapi_image: uqrcc/pitschi-xapi:1.5.12
 pitschi_xapi_db_image: postgres:12.6
 
 
