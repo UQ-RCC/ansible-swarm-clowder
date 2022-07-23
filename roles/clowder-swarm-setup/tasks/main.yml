@@ -624,25 +624,25 @@
                 - qcollections_volume:/data
 
             # extract preview image from audio spectrogram
-            audiopreview:
-              image: "{{ audiopreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-                placement:
-                  constraints:
-                    - node.role != manager
-              volumes:
-                - qcollections_volume:/data
+            # audiopreview:
+            #   image: "{{ audiopreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #     placement:
+            #       constraints:
+            #         - node.role != manager
+            #   volumes:
+            #     - qcollections_volume:/data
 
             # extract pdf preview image
             pdfpreview:
