@@ -44,3 +44,13 @@ wait_time_to_sync=24
 [admin]
 admin_username={{ pxapi_admin }}
 admin_password={{ pxapi_password }}
+
+
+[keycloak]
+server_url={{ keycloak_server_url }}
+realm_name={{ keycloak_realm_name }}
+client_id={{ keycloak_xapi_client_id }}
+client_secret={{ keycloak_xapi_client_secret }}
+authorization_url={{ keycloak_authorization_url }}
+token_url={{ keycloak_token_url }}
+public_key={{ keycloak_public_key }}

@@ -187,6 +187,16 @@
     backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
 
+- name: copy dashboard_config.json.j2
+  template:
+    src: "dashboard_config.json.j2"
+    dest: "/dashboard_config.json"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+  when: node.hostname=={{ groups['SwarmMaster'][1] }}
+
+
 
 - block:
   - name: create a network for all clowder setup
@@ -594,25 +604,25 @@
                 - qcollections_volume:/data
 
             # extract preview image from audio spectrogram
-            audiopreview:
-              image: "{{ audiopreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-                placement:
-                  constraints:
-                    - node.role != manager
-              volumes:
-                - qcollections_volume:/data
+            # audiopreview:
+            #   image: "{{ audiopreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #     placement:
+            #       constraints:
+            #         - node.role != manager
+            #   volumes:
+            #     - qcollections_volume:/data
 
             # extract pdf preview image
             pdfpreview:
@@ -770,6 +780,34 @@
                 placement:
                   constraints:
                     - node.role != manager
+
+
+            pitschidashboard:
+              image: "{{ pitschi_dashboard_image }}"
+              restart: unless-stopped
+              networks:
+                - clowder
+              depends_on:
+                - xapi
+              volumes:
+                - /dashboard_config.json:/usr/share/nginx/html/config.json
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.backend=pitschidashboard"
+                  - "traefik.port=80"
+                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /dashboard"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.redirectorservice.frontend.entryPoints=http"
+                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
+                  - "traefik.webservice.frontend.entryPoints=https"
+                placement:
+                  constraints:
+                    - node.hostname=={{ groups['SwarmMaster'][1] }}
 
           networks:
             clowder:

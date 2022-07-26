@@ -1,0 +1,11 @@
+{
+  "keycloak": {
+    "url": "{{ keycloak_server_url }}/auth/",
+    "realm": "{{ keycloak_realm_name }}",
+    "clientId": "{{ keycloak_dashboard_clientid }}",
+    "onLoad": "login-required",
+    "minValidity": 10
+  },
+  "backend": "https://{{ pitschi_dns }}/xapi/dashboard",
+  "signoutUrl": "https://{{ pitschi_dns }}"
+}
