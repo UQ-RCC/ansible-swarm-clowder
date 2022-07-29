@@ -397,7 +397,7 @@
                   - "traefik.http.routers.traefik-public-http.entrypoints=http"
                   - "traefik.http.routers.traefik-public-http.middlewares=https-redirect"
                   - "traefik.http.routers.traefik-public-https.middlewares=traefik-ipwhitelist, traefik-auth"
-                  - "traefik.http.routers.traefik-public-https.rule=Host(`traefik.{{ pitschi_dns }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+                  - "traefik.http.routers.traefik-public-https.rule=Host(`{{ traefik_dns }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
                   - "traefik.http.routers.traefik-public-https.entrypoints=https"
                   - "traefik.http.routers.traefik-public-https.service=api@internal"
                   - "traefik.http.routers.traefik-public-https.tls=true"
