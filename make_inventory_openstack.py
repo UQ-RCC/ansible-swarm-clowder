@@ -31,7 +31,7 @@ keystone = keystoneclient.client.Client(session=sess)
 
 heat = heatclient.client.Client(version=1, session=sess)
 nova = novaclient.client.Client(version=2, session=sess)
-cinder = cinderclient.client.Client(version=2, session=sess)
+cinder = cinderclient.client.Client(version=3, session=sess)
 
 stacks = [s for s in heat.stacks.list(filters={'stack_name': stack_name})]
 if len(stacks) == 0:

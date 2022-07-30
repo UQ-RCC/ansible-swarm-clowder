@@ -194,7 +194,6 @@
     mode: '0755'
     force: "yes"
     backup: "yes"
-  when: node.hostname=={{ groups['SwarmMaster'][1] }}
 
 
 
@@ -373,6 +372,12 @@
               networks:
                 - clowder
               ports:
+                # - target: 80
+                #   published: 80
+                #   mode: host
+                # - target: 443
+                #   published: 443
+                #   mode: host
                 - "80:80"
                 - "443:443"
               volumes:
@@ -572,7 +577,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 1
+                replicas: 3
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -594,7 +599,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 1
+                replicas: 3
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -700,7 +705,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 1
+                replicas: 2
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -773,7 +778,7 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.redirectorservice.frontend.entryPoints=http"
                   - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.entryPoints.http.whiteList.sourceRange={{ xapi_ip_filters }}"
+                  - "traefik.entryPoints.http.whiteList.useXForwardedFor=true"
                   - "traefik.webservice.frontend.entryPoints=https"
                   - "traefik.backend.loadbalancer.stickiness=false"
                   - "traefik.backend.loadbalancer.method=drr"
@@ -807,7 +812,7 @@
                   - "traefik.webservice.frontend.entryPoints=https"
                 placement:
                   constraints:
-                    - node.hostname=={{ groups['SwarmMaster'][1] }}
+                    - node.role != manager
 
           networks:
             clowder:
