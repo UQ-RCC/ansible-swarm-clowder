@@ -4,7 +4,7 @@ elastic_search_image: elasticsearch:2.4.6
 # mongo
 mongo_image: mongo:3.6-xenial
 # traefik configs
-consul_image: consul:1.9.8
+consul_image: consul:1.12.3
 traefik_image: traefik:2.8
 # clowder
 clowder_image: uqrcc/clowder:pitschi1.20.2

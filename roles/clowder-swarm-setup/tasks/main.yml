@@ -40,6 +40,12 @@
       path: /mnt/xapi-data
       state: directory
       mode: '0755'
+  # dev only
+  - name: /data
+    file:
+      path: /data
+      state: directory
+      mode: '0755'
 
   when: inventory_hostname in groups['SwarmSlave']
 
@@ -293,56 +299,56 @@
       compose:
         - version: "3.5"
           services:
-            consulmaster:
-              image: "{{ consul_image }}"
-              command: agent -server -client=0.0.0.0 -bootstrap -ui
-              volumes:
-                - /mnt/consul:/consul/data
-              environment:
-                - CONSUL_BIND_INTERFACE=eth1
-                - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
-              networks:
-                - clowder
-              deploy:
-                replicas: 1
-                placement:
-                  constraints:
-                    - node.hostname=={{ groups['SwarmMaster'][0] }}
-                restart_policy:
-                  condition: on-failure
-                labels:
-                  - "traefik.enable=true"
-                  - "traefik.docker.network=clowder"
-                  - "traefik.http.middlewares.consul-auth.basicauth.users={{ traefik_user }}"
-                  - "traefik.http.routers.consul-http.entrypoints=http"
-                  - "traefik.http.routers.consul-http.middlewares=https-redirect"
-                  - "traefik.http.routers.consul-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/consul`)"
-                  - "traefik.http.routers.consul-https.middlewares=consul-https-stripprefix, consul-ipwhitelist, consul-auth"
-                  - "traefik.http.middlewares.consul-https-stripprefix.stripprefix.prefixes=/consul"
-                  - "traefik.http.routers.consul-https.entrypoints=https"
-                  - "traefik.http.routers.consul-https.tls=true"
-                  - "traefik.http.routers.consul-https.tls.certresolver=le"
-                  - "traefik.http.services.consul.loadbalancer.server.port=8500"
-                  - "traefik.http.middlewares.consul-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
+            # consulmaster:
+            #   image: "{{ consul_image }}"
+            #   command: agent -server -client=0.0.0.0 -bootstrap -ui
+            #   volumes:
+            #     - /mnt/consul:/consul/data
+            #   environment:
+            #     - CONSUL_BIND_INTERFACE=eth1
+            #     - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+            #   networks:
+            #     - clowder
+            #   deploy:
+            #     replicas: 1
+            #     placement:
+            #       constraints:
+            #         - node.hostname=={{ groups['SwarmMaster'][0] }}
+            #     restart_policy:
+            #       condition: on-failure
+            #     labels:
+            #       - "traefik.enable=true"
+            #       - "traefik.docker.network=clowder"
+            #       - "traefik.http.middlewares.consul-auth.basicauth.users={{ traefik_user }}"
+            #       - "traefik.http.routers.consul-http.entrypoints=http"
+            #       - "traefik.http.routers.consul-http.middlewares=https-redirect"
+            #       - "traefik.http.routers.consul-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/consul`)"
+            #       - "traefik.http.routers.consul-https.middlewares=consul-https-stripprefix, consul-ipwhitelist, consul-auth"
+            #       - "traefik.http.middlewares.consul-https-stripprefix.stripprefix.prefixes=/consul"
+            #       - "traefik.http.routers.consul-https.entrypoints=https"
+            #       - "traefik.http.routers.consul-https.tls=true"
+            #       - "traefik.http.routers.consul-https.tls.certresolver=le"
+            #       - "traefik.http.services.consul.loadbalancer.server.port=8500"
+            #       - "traefik.http.middlewares.consul-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
 
-            consulslave:
-              image: "{{ consul_image }}"
-              command: agent -server -client=0.0.0.0 -retry-join="consulmaster"
-              volumes:
-                - /mnt/consul:/consul/data
-              environment:
-                - CONSUL_BIND_INTERFACE=eth1
-                - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
-              networks:
-                - clowder
-              deploy:
-                replicas: "{{ total_consul_slave_nodes }}"
-                placement:
-                  constraints:
-                    - node.role == manager
-                    - node.hostname!={{ groups['SwarmMaster'][0] }}
-              depends_on:
-                - consulmaster
+            # consulslave:
+            #   image: "{{ consul_image }}"
+            #   command: agent -server -client=0.0.0.0 -retry-join="consulmaster"
+            #   volumes:
+            #     - /mnt/consul:/consul/data
+            #   environment:
+            #     - CONSUL_BIND_INTERFACE=eth1
+            #     - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+            #   networks:
+            #     - clowder
+            #   deploy:
+            #     replicas: "{{ total_consul_slave_nodes }}"
+            #     placement:
+            #       constraints:
+            #         - node.role == manager
+            #         - node.hostname!={{ groups['SwarmMaster'][0] }}
+            #   depends_on:
+            #     - consulmaster
              
             ################ traefik
             traefik:
@@ -368,7 +374,7 @@
                 - "--providers.docker.watch"
                 - "--providers.docker.network=clowder"
                 # CONSUL
-                - "--providers.consul.endpoints=consulmaster:8500"
+                # - "--providers.consul.endpoints=consulmaster:8500"
                 # LOG
                 - "--log"
                 - "--accesslog"
@@ -413,8 +419,8 @@
                   - "traefik.http.routers.traefik-public-https.tls.certresolver=le"
                   - "traefik.http.services.traefik-public.loadbalancer.server.port=9999"
                   - "traefik.http.middlewares.traefik-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
-              depends_on:
-                - consulmaster
+              # depends_on:
+                # - consulmaster
 
             clowder:
               image: "{{ clowder_image }}"
