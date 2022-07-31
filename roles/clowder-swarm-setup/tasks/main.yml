@@ -601,7 +601,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 3
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -623,7 +623,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 3
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -654,67 +654,67 @@
             #     - qcollections_volume:/data
 
             # extract pdf preview image
-            pdfpreview:
-              image: "{{ pdfpreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-                placement:
-                  constraints:
-                    - node.role != manager
-              volumes:
-                - qcollections_volume:/data
+            # pdfpreview:
+            #   image: "{{ pdfpreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #     placement:
+            #       constraints:
+            #         - node.role != manager
+            #   volumes:
+            #     - qcollections_volume:/data
 
             # extract video preview image as well as smaller video
-            videopreview:
-              image: "{{ videopreview_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-                placement:
-                  constraints:
-                    - node.role != manager
-              volumes:
-                - qcollections_volume:/data
+            # videopreview:
+            #   image: "{{ videopreview_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #     placement:
+            #       constraints:
+            #         - node.role != manager
+            #   volumes:
+            #     - qcollections_volume:/data
 
-            hyperspy-dm3:
-              image: "{{ hyperspydm3_image }}"
-              networks:
-                - clowder
-              depends_on:
-                - rabbitmq
-                - clowder
-              environment:
-                - RABBITMQ_URI={{ rabbitmq_uri }}
-              deploy:
-                # mode: global
-                mode: replicated
-                replicas: 1
-                restart_policy:
-                  condition: on-failure
-                placement:
-                  constraints:
-                    - node.role != manager
-              volumes:
-                - qcollections_volume:/data
+            # hyperspy-dm3:
+            #   image: "{{ hyperspydm3_image }}"
+            #   networks:
+            #     - clowder
+            #   depends_on:
+            #     - rabbitmq
+            #     - clowder
+            #   environment:
+            #     - RABBITMQ_URI={{ rabbitmq_uri }}
+            #   deploy:
+            #     # mode: global
+            #     mode: replicated
+            #     replicas: 1
+            #     restart_policy:
+            #       condition: on-failure
+            #     placement:
+            #       constraints:
+            #         - node.role != manager
+            #   volumes:
+            #     - qcollections_volume:/data
 
 
             bioformat-extractor:
@@ -729,7 +729,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 2
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -738,23 +738,23 @@
               volumes:
                 - qcollections_volume:/data
             
-            wdf:
-             image: "{{ wdf_image }}"
-             networks:
-               - clowder
-             depends_on:
-               - rabbitmq
-               - clowder
-             environment:
-               - RABBITMQ_URI={{ rabbitmq_uri }}
-             deploy:
-               # mode: global
-               mode: replicated
-               replicas: 1
-               restart_policy:
-                 condition: on-failure
-             volumes:
-               - qcollections_volume:/data
+            # wdf:
+            #  image: "{{ wdf_image }}"
+            #  networks:
+            #    - clowder
+            #  depends_on:
+            #    - rabbitmq
+            #    - clowder
+            #  environment:
+            #    - RABBITMQ_URI={{ rabbitmq_uri }}
+            #  deploy:
+            #    # mode: global
+            #    mode: replicated
+            #    replicas: 1
+            #    restart_policy:
+            #      condition: on-failure
+            #  volumes:
+            #    - qcollections_volume:/data
 
             ### xapi
             # ----------------------------------------------------------------------

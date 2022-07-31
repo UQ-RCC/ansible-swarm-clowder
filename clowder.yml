@@ -9,8 +9,8 @@
   roles:
     - { role: 'clowder-swarm-setup', tags: 'setup' }
     - { role: 'clowder-swarm-delete', tags: 'destroy' }
-    - { role: 'backup', tags: 'backup' }
-    - { role: 'monitor', tags: 'monitor' }
+    # - { role: 'backup', tags: 'backup' }
+    # - { role: 'monitor', tags: 'monitor' }
     
     
 

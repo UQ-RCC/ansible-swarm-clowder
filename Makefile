@@ -61,11 +61,11 @@ deploy-clowder: clowder.yml
 destroy-clowder: clowder.yml
 	ansible-playbook -i inventory.yml clowder.yml --tags=destroy
 
-backup-clowder: clowder.yml
-	ansible-playbook -i inventory.yml clowder.yml --tags=backup
+# backup-clowder: clowder.yml
+# 	ansible-playbook -i inventory.yml clowder.yml --tags=backup
 
-monitor: clowder.yml
-	ansible-playbook -i inventory.yml clowder.yml --tags=monitor
+# monitor: clowder.yml
+# 	ansible-playbook -i inventory.yml clowder.yml --tags=monitor
 
 upgrade: upgrade.yml
 	ansible-playbook -i inventory.yml upgrade.yml
