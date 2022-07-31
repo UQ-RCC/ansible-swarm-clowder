@@ -5,7 +5,7 @@
     host_key_checking: False
   vars_files:
     - vars/vars.yml
-    - vars/secrets.yml
+    # - vars/secrets.yml
   tasks:
   - include_vars: vars/vars.yml
   - block:
@@ -74,11 +74,11 @@
     host_key_checking: False
   vars_files:
     - vars/vars.yml
-    - vars/secrets.yml
+    # - vars/secrets.yml
   tasks:
   - include_vars: vars/vars.yml
 
   ##########################################    
   roles:
-    - { role: qcollections }
+    # - { role: qcollections }
     - { role: glusterfs, volname: "{{ gluster_volname }}", server_list: "{{ allslaves_second_ips }}", volmnt: "{{ gluster_volmnt }}", replicas: "{{ gluster_replicas }}", brickmnt: "{{ gluster_brickmnt }}" }
