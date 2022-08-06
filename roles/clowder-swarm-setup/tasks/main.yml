@@ -194,6 +194,7 @@
     mode: '0755'
     force: "yes"
     backup: "yes"
+  when: inventory_hostname in groups['SwarmMaster']
 
 
 
@@ -575,9 +576,9 @@
               environment:
                 - RABBITMQ_URI={{ rabbitmq_uri }}
               deploy:
-                # mode: global
+                #mode: global
                 mode: replicated
-                replicas: 3
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -597,9 +598,9 @@
               environment:
                 - RABBITMQ_URI={{ rabbitmq_uri }}
               deploy:
-                # mode: global
+                #mode: global
                 mode: replicated
-                replicas: 3
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -812,7 +813,7 @@
                   - "traefik.webservice.frontend.entryPoints=https"
                 placement:
                   constraints:
-                    - node.role != manager
+                    - node.role == manager
 
           networks:
             clowder:
