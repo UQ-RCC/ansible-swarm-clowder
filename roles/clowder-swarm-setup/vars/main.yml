@@ -20,7 +20,7 @@ smtp_server: smtp
 q_collection_root: /data
 
 # rabbitmq
-rabbitmq_image: rabbitmq:management-alpine
+rabbitmq_image: rabbitmq:3.10.7-management-alpine
 rabbitmq_default_user: clowder
 rabbitmq_mgmt_port: 15672
 rabbitmq_mgmt_path: /rabbitmq
@@ -44,7 +44,7 @@ bioformat_extractor_image: uqrcc/bioformat-extractor:1.2
 pitschi_xapi_image: uqrcc/pitschi-xapi:1.5.16
 pitschi_xapi_db_image: postgres:12.6
 wdf_image: uqrcc/wdf-extractor:latest
-pitschi_dashboard_image: uqrcc/pitschi-dashboard:0.1
+pitschi_dashboard_image: uqrcc/pitschi-dashboard:0.3
 
 ### ppms
 ppms_extra_profile_action: Report75

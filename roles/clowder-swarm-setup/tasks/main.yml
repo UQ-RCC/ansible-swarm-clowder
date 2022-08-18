@@ -193,6 +193,15 @@
     backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
 
+- name: copy rabbitmq.confg.j2
+  template:
+    src: "rabbitmq.conf.j2"
+    dest: "/rabbitmq.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+  when: inventory_hostname in groups['SwarmSlave']
+
 - name: copy dashboard_config.json.j2
   template:
     src: "dashboard_config.json.j2"
@@ -453,6 +462,8 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.http.routers.clowder-http.entrypoints=http"
                   - "traefik.http.routers.clowder-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
                   - "traefik.http.routers.clowder-https.rule=Host(`{{ pitschi_dns }}`)"
                   - "traefik.http.routers.clowder-https.entrypoints=https"
                   - "traefik.http.routers.clowder-https.tls=true"
@@ -468,14 +479,13 @@
               image: "{{ rabbitmq_image }}"
               networks:
                 - clowder
-              environment:
-                - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management path_prefix "/rabbitmq"
-                - RABBITMQ_DEFAULT_USER={{ rabbitmq_default_user }}
-                - RABBITMQ_DEFAULT_PASS={{ rabbitmq_default_pass }}
-                - TRAEFIK_HOST=Host:{{ pitschi_dns }};
-                - TRAEFIK_IPFILTER={{ traefik_ip_filters }}
+              # environment:
+              #   - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management path_prefix "/rabbitmq"
+              #   - RABBITMQ_DEFAULT_USER={{ rabbitmq_default_user }}
+              #   - RABBITMQ_DEFAULT_PASS={{ rabbitmq_default_pass }}
               volumes:
                 - /mnt/rabbitmq:/var/lib/rabbitmq
+                - /rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
               deploy:
                 mode: replicated
                 replicas: 1
@@ -491,15 +501,17 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.http.routers.rabbit-http.entrypoints=http"
                   - "traefik.http.routers.rabbit-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.rabbit-https.entrypoints=https"
+                  - "traefik.http.routers.rabbit-https.tls=true"
+                  - "traefik.http.routers.rabbit-https.tls.certresolver=le"
                   - "traefik.http.routers.rabbit-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/rabbitmq`)"
                   - "traefik.http.routers.rabbit-https.middlewares=rabbit-https-stripprefix, rabbit-ipwhitelist, rabbit-auth"
                   - "traefik.http.middlewares.rabbit-auth.basicauth.users={{ traefik_user }}"
                   - "traefik.http.middlewares.rabbit-https-stripprefix.stripprefix.prefixes=/rabbitmq"
-                  - "traefik.http.routers.rabbit-https.entrypoints=https"
-                  - "traefik.http.routers.rabbit-https.tls=true"
-                  - "traefik.http.routers.rabbit-https.tls.certresolver=le"
-                  - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
                   - "traefik.http.middlewares.rabbit-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
+                  - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
 
             ############# monitor #################  
             # monitor clowder extractors
@@ -527,6 +539,8 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.http.routers.monitor-http.entrypoints=http"
                   - "traefik.http.routers.monitor-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
                   - "traefik.http.routers.monitor-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/monitor`)"
                   - "traefik.http.routers.monitor-https.middlewares=monitor-https-stripprefix, monitor-ipwhitelist, monitor-auth"
                   - "traefik.http.middlewares.monitor-auth.basicauth.users={{ traefik_user }}"
@@ -805,6 +819,8 @@
                   - "traefik.docker.network=clowder"
                   - "traefik.http.routers.xapi-http.entrypoints=http"
                   - "traefik.http.routers.xapi-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
                   - "traefik.http.routers.xapi-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/xapi`)"
                   - "traefik.http.routers.xapi-https.middlewares=xapi-https-stripprefix, xapi-ipwhitelist"
                   - "traefik.http.middlewares.xapi-https-stripprefix.stripprefix.prefixes=/xapi"
@@ -813,8 +829,8 @@
                   - "traefik.http.routers.xapi-https.tls.certresolver=le"
                   - "traefik.http.services.xapi.loadbalancer.server.port=80"
                   - "traefik.http.middlewares.xapi-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
-                  - "traefik.http.services.xapi.loadbalancer.server.sticky.cookie=true"
-                  - "traefik.http.services.xapi.loadbalancer.server.sticky.cookie.name=xapi_cookie"
+                  - "traefik.http.services.xapi.loadbalancer.sticky.cookie=true"
+                  - "traefik.http.services.xapi.loadbalancer.sticky.cookie.name=xapi_cookie"
                 placement:
                   constraints:
                     - node.role != manager
@@ -836,13 +852,18 @@
                   condition: on-failure
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=pitschidashboard"
-                  - "traefik.port=80"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /dashboard"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
+                  - "traefik.http.routers.pdb-http.entrypoints=http"
+                  - "traefik.http.routers.pdb-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.pdb-https.entrypoints=https"
+                  - "traefik.http.routers.pdb-https.tls=true"
+                  - "traefik.http.routers.pdb-https.tls.certresolver=le"
+                  - "traefik.http.services.pdb.loadbalancer.server.port=80"
+                  - "traefik.http.routers.pdb-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/dashboard`)"
+                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix"
+                  - "traefik.http.middlewares.pdb-https-stripprefix.stripprefix.prefixes=/dashboard"
                 placement:
                   constraints:
                     - node.role != manager
