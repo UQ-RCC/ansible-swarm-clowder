@@ -1,9 +1,9 @@
 ---
 # traefik configs
-traefik_image: traefik:1.7
+traefik_image: traefik:2.8
 
 
-pitschi_xapi_image: uqrcc/pitschi-xapi:1.5.12
+pitschi_xapi_image: uqrcc/pitschi-xapi:1.6
 pitschi_xapi_db_image: postgres:12.6
 
 

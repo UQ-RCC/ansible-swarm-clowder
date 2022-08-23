@@ -187,6 +187,15 @@
     backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
 
+- name: copy rabbitmq.confg.j2
+  template:
+    src: "rabbitmq.conf.j2"
+    dest: "/rabbitmq.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+  when: inventory_hostname in groups['SwarmSlave']
+
 - name: copy dashboard_config.json.j2
   template:
     src: "dashboard_config.json.j2"
@@ -294,93 +303,97 @@
       compose:
         - version: "3.5"
           services:
-            consulmaster:
-              image: "{{ consul_image }}"
-              command: agent -server -client=0.0.0.0 -bootstrap -ui
-              volumes:
-                - /mnt/consul:/consul/data
-              environment:
-                - CONSUL_BIND_INTERFACE=eth1
-                - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
-              networks:
-                - clowder
-              deploy:
-                replicas: 1
-                placement:
-                  constraints:
-                    - node.hostname=={{ groups['SwarmMaster'][0] }}
-                restart_policy:
-                  condition: on-failure
-                labels:
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /consul"
-                  - "traefik.backend=consul"
-                  - "traefik.enable=true"
-                  - "traefik.port=8500"
-                  - "traefik.docker.network=clowder"
-                  - "traefik.frontend.entryPoints=http,https"
-                  - "traefik.frontend.redirect.entryPoint=https"
-                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
+            # consulmaster:
+            #   image: "{{ consul_image }}"
+            #   command: agent -server -client=0.0.0.0 -bootstrap -ui
+            #   volumes:
+            #     - /mnt/consul:/consul/data
+            #   environment:
+            #     - CONSUL_BIND_INTERFACE=eth1
+            #     - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+            #   networks:
+            #     - clowder
+            #   deploy:
+            #     replicas: 1
+            #     placement:
+            #       constraints:
+            #         - node.hostname=={{ groups['SwarmMaster'][0] }}
+            #     restart_policy:
+            #       condition: on-failure
+            #     labels:
+            #       - "traefik.enable=true"
+            #       - "traefik.docker.network=clowder"
+            #       - "traefik.http.middlewares.consul-auth.basicauth.users={{ traefik_user }}"
+            #       - "traefik.http.routers.consul-http.entrypoints=http"
+            #       - "traefik.http.routers.consul-http.middlewares=https-redirect"
+            #       - "traefik.http.routers.consul-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/consul`)"
+            #       - "traefik.http.routers.consul-https.middlewares=consul-https-stripprefix, consul-ipwhitelist, consul-auth"
+            #       - "traefik.http.middlewares.consul-https-stripprefix.stripprefix.prefixes=/consul"
+            #       - "traefik.http.routers.consul-https.entrypoints=https"
+            #       - "traefik.http.routers.consul-https.tls=true"
+            #       - "traefik.http.routers.consul-https.tls.certresolver=le"
+            #       - "traefik.http.services.consul.loadbalancer.server.port=8500"
+            #       - "traefik.http.middlewares.consul-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
 
-            consulslave:
-              image: "{{ consul_image }}"
-              command: agent -server -client=0.0.0.0 -retry-join="consulmaster"
-              volumes:
-                - /mnt/consul:/consul/data
-              environment:
-                - CONSUL_BIND_INTERFACE=eth1
-                - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
-              networks:
-                - clowder
-              deploy:
-                replicas: "{{ total_consul_slave_nodes }}"
-                placement:
-                  constraints:
-                    - node.role == manager
-                    - node.hostname!={{ groups['SwarmMaster'][0] }}
-              depends_on:
-                - consulmaster
+            # consulslave:
+            #   image: "{{ consul_image }}"
+            #   command: agent -server -client=0.0.0.0 -retry-join="consulmaster"
+            #   volumes:
+            #     - /mnt/consul:/consul/data
+            #   environment:
+            #     - CONSUL_BIND_INTERFACE=eth1
+            #     - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
+            #   networks:
+            #     - clowder
+            #   deploy:
+            #     replicas: "{{ total_consul_slave_nodes }}"
+            #     placement:
+            #       constraints:
+            #         - node.role == manager
+            #         - node.hostname!={{ groups['SwarmMaster'][0] }}
+            #   depends_on:
+            #     - consulmaster
              
             ################ traefik
             traefik:
               image: "{{ traefik_image }}"
               command:
                 - "--api"
+                - "--api.dashboard=true"
                 # Entrypoints
-                - "--defaultentrypoints=https,http"
-                - "--entryPoints=Name:http Address::80 Redirect.EntryPoint:https"
-                - "--entryPoints=Name:https Address::443 TLS"
-                # consul
-                - "--consul"
-                - "--consul.endpoint=consulmaster:8500"
-                # Configuration for acme (https://letsencrypt.org/)
-                - "--acme"
-                - --acme.storage="traefik/acme/account"
-                # - "--acme.storage=/config/acme.json"
-                - "--acme.entrypoint=https"
-                - "--acme.httpChallenge.entryPoint=http"
-                - "--acme.onhostrule=true"
-                - "--acme.onDemand=false"
-                #- --acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
-                - "--acme.email={{ traefik_acme_email }}"
-                - "--acme.acmelogging=true"
+                # Create an entrypoint "http" listening on port 80
+                - "--entrypoints.http.address=:80"
+                # Create an entrypoint "https" listening on port 443
+                - "--entrypoints.https.address=:443"
+                # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
+                - "--certificatesresolvers.le.acme.email={{ traefik_acme_email }}"
+                # Store the Let's Encrypt certificates in the mounted volume
+                - "--certificatesresolvers.le.acme.storage=/config/acme.json"
+                # Use the TLS Challenge for Let's Encrypt
+                - "--certificatesresolvers.le.acme.tlschallenge=true"
                 # DOCKER
-                - "--docker"
-                - "--docker.swarmmode"
-                - "--docker.exposedbydefault=false"
-                - "--docker.watch"
-                - "--docker.network=clowder"
-                - "--loglevel=ERROR"
+                - "--providers.docker"
+                - "--providers.docker.swarmmode"
+                - "--providers.docker.exposedbydefault=false"
+                - "--providers.docker.watch"
+                - "--providers.docker.network=clowder"
+                # CONSUL
+                # - "--providers.consul.endpoints=consulmaster:8500"
+                # LOG
+                - "--log"
+                - "--accesslog"
+                - "--log.level=DEBUG"
               networks:
                 - clowder
               ports:
-                # - target: 80
-                #   published: 80
-                #   mode: host
-                # - target: 443
-                #   published: 443
-                #   mode: host
-                - "80:80"
-                - "443:443"
+                - target: 80
+                  published: 80
+                  mode: host
+                - target: 443
+                  published: 443
+                  mode: host
+                  # - "80:80"
+                  # - "443:443"
               volumes:
                 - /var/run/docker.sock:/var/run/docker.sock
                 - /mnt/traefik:/config
@@ -396,28 +409,37 @@
                     - node.role == manager
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=traefik"
-                  - "traefik.port=8080"
                   - "traefik.docker.network=clowder"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /traefik"
-                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.backend.loadbalancer.stickiness=false"
-                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
-              depends_on:
-                - consulmaster
+                  - "traefik.http.middlewares.traefik-auth.basicauth.users={{ traefik_user }}"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.traefik-public-http.entrypoints=http"
+                  - "traefik.http.routers.traefik-public-http.middlewares=https-redirect"
+                  - "traefik.http.routers.traefik-public-https.middlewares=traefik-ipwhitelist, traefik-auth"
+                  - "traefik.http.routers.traefik-public-https.rule=Host(`{{ traefik_dns }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+                  - "traefik.http.routers.traefik-public-https.entrypoints=https"
+                  - "traefik.http.routers.traefik-public-https.service=api@internal"
+                  - "traefik.http.routers.traefik-public-https.tls=true"
+                  - "traefik.http.routers.traefik-public-https.tls.certresolver=le"
+                  - "traefik.http.services.traefik-public.loadbalancer.server.port=9999"
+                  - "traefik.http.middlewares.traefik-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
+              # depends_on:
+                # - consulmaster
 
             clowder:
               image: "{{ clowder_image }}"
               networks:
                 - clowder
-              labels:
-                - "traefik.enable=true"
-                - "traefik.backend=clowder"
-                - "traefik.port=9000"
-                - "traefik.frontend.rule={{ traefik_host }}PathPrefix: {{ clowder_context }}"
+              # labels:
+              #   - "traefik.enable=true"
+              #   - "traefik.docker.network=clowder"
+              #   - "traefik.http.routers.clowder-http.entrypoints=http"
+              #   - "traefik.http.routers.clowder-http.middlewares=https-redirect"
+              #   - "traefik.http.routers.clowder-https.rule=Host(`{{ pitschi_dns }}`)"
+              #   - "traefik.http.routers.clowder-https.entrypoints=https"
+              #   - "traefik.http.routers.clowder-https.tls=true"
+              #   - "traefik.http.routers.clowder-https.tls.certresolver=le"
+              #   - "traefik.http.services.clowder.loadbalancer.server.port=9000"
               volumes:
                 - /clowder_data/:/home/clowder/data
                 - qcollections_volume:/data
@@ -432,15 +454,18 @@
                     - node.role != manager
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=clowder"
-                  - "traefik.port=9000"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.backend.loadbalancer.stickiness=true"
-                  - "traefik.backend.loadbalancer.method=drr"
+                  - "traefik.http.routers.clowder-http.entrypoints=http"
+                  - "traefik.http.routers.clowder-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.clowder-https.rule=Host(`{{ pitschi_dns }}`)"
+                  - "traefik.http.routers.clowder-https.entrypoints=https"
+                  - "traefik.http.routers.clowder-https.tls=true"
+                  - "traefik.http.routers.clowder-https.tls.certresolver=le"
+                  - "traefik.http.services.clowder.loadbalancer.server.port=9000"
+                  - "traefik.http.services.clowder.loadbalancer.sticky.cookie=true"
+                  - "traefik.http.services.clowder.loadbalancer.sticky.cookie.name=pitschi_cookie"
 
 
             ############### rabbit mq ##################
@@ -449,14 +474,13 @@
               image: "{{ rabbitmq_image }}"
               networks:
                 - clowder
-              environment:
-                - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management path_prefix "/rabbitmq"
-                - RABBITMQ_DEFAULT_USER={{ rabbitmq_default_user }}
-                - RABBITMQ_DEFAULT_PASS={{ rabbitmq_default_pass }}
-                - TRAEFIK_HOST={{ traefik_host }}
-                - TRAEFIK_IPFILTER={{ traefik_ip_filters }}
+              # environment:
+              #   - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management path_prefix "/rabbitmq"
+              #   - RABBITMQ_DEFAULT_USER={{ rabbitmq_default_user }}
+              #   - RABBITMQ_DEFAULT_PASS={{ rabbitmq_default_pass }}
               volumes:
                 - /mnt/rabbitmq:/var/lib/rabbitmq
+                - /rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
               deploy:
                 mode: replicated
                 replicas: 1
@@ -469,16 +493,20 @@
                     - node.hostname=={{ groups['SwarmSlave'][1] }}
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=rabbitmq"
-                  - "traefik.port=15672"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /rabbitmq"
-                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
-
+                  - "traefik.http.routers.rabbit-http.entrypoints=http"
+                  - "traefik.http.routers.rabbit-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.rabbit-https.entrypoints=https"
+                  - "traefik.http.routers.rabbit-https.tls=true"
+                  - "traefik.http.routers.rabbit-https.tls.certresolver=le"
+                  - "traefik.http.routers.rabbit-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/rabbitmq`)"
+                  - "traefik.http.routers.rabbit-https.middlewares=rabbit-https-stripprefix, rabbit-ipwhitelist, rabbit-auth"
+                  - "traefik.http.middlewares.rabbit-auth.basicauth.users={{ traefik_user }}"
+                  - "traefik.http.middlewares.rabbit-https-stripprefix.stripprefix.prefixes=/rabbitmq"
+                  - "traefik.http.middlewares.rabbit-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
+                  - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
 
             ############# monitor #################  
             # monitor clowder extractors
@@ -503,15 +531,20 @@
                     - node.role != manager
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=monitor"
-                  - "traefik.port=9999"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefix: /monitor"
-                  - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.frontend.auth.basic.users={{ traefik_user }}"
+                  - "traefik.http.routers.monitor-http.entrypoints=http"
+                  - "traefik.http.routers.monitor-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.monitor-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/monitor`)"
+                  - "traefik.http.routers.monitor-https.middlewares=monitor-https-stripprefix, monitor-ipwhitelist, monitor-auth"
+                  - "traefik.http.middlewares.monitor-auth.basicauth.users={{ traefik_user }}"
+                  - "traefik.http.middlewares.monitor-https-stripprefix.stripprefix.prefixes=/monitor"
+                  - "traefik.http.routers.monitor-https.entrypoints=https"
+                  - "traefik.http.routers.monitor-https.tls=true"
+                  - "traefik.http.routers.monitor-https.tls.certresolver=le"
+                  - "traefik.http.services.monitor.loadbalancer.server.port=9999"
+                  - "traefik.http.middlewares.monitor-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
 
             # not needed for test
             # portainer:
@@ -522,7 +555,7 @@
             #   networks:
             #     - clowder
             #   environment:
-            #     - TRAEFIK_HOST="{{ traefik_host }}"
+            #     - TRAEFIK_HOST=Host:{{ pitschi_dns }};
             #     - TRAEFIK_IPFILTER="{{ traefik_ip_filters }}"
             #   volumes:
             #     - /var/run/docker.sock:/var/run/docker.sock
@@ -534,14 +567,19 @@
             #     restart_policy:
             #       condition: on-failure
             #     labels:
-            #       - "traefik.enable=true"
-            #       - "traefik.backend=portainer"
-            #       - "traefik.frontend.rule=${TRAEFIK_FRONTEND_RULE:-}PathPrefixStrip:/portainer"
-            #       - "traefik.website.frontend.whiteList.sourceRange={{ traefik_ip_filters }}"
-            #       - "traefik.docker.network=clowder"
-            #       - "traefik.redirectorservice.frontend.entryPoints=http"
-            #       - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-            #       - "traefik.webservice.frontend.entryPoints=https"
+                    # - "traefik.enable=true"
+                    # - "traefik.docker.network=clowder"
+                    # - "traefik.http.routers.portainer-http.entrypoints=http"
+                    # - "traefik.http.routers.portainer-http.middlewares=https-redirect"
+                    # - "traefik.http.routers.portainer-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/portainer`)"
+                    # - "traefik.http.routers.portainer-https.middlewares=portainer-https-stripprefix, portainer-ipwhitelist, portainer-auth"
+                    # - "traefik.http.middlewares.portainer-auth.basicauth.users={{ traefik_user }}"
+                    # - "traefik.http.middlewares.portainer-https-stripprefix.stripprefix.prefixes=/portainer"
+                    # - "traefik.http.routers.portainer-https.entrypoints=https"
+                    # - "traefik.http.routers.portainer-https.tls=true"
+                    # - "traefik.http.routers.portainer-https.tls.certresolver=le"
+                    # - "traefik.http.services.portainer.loadbalancer.server.port=9999"
+                    # - "traefik.http.middlewares.portainer-ipwhitelist.ipwhitelist.sourcerange={{ traefik_ip_filters }}"
 
 
             # ----------------------------------------------------------------------
@@ -706,7 +744,7 @@
               deploy:
                 # mode: global
                 mode: replicated
-                replicas: 2
+                replicas: 1
                 restart_policy:
                   condition: on-failure
                 placement:
@@ -773,16 +811,21 @@
                   condition: on-failure
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=pitschixapi"
-                  - "traefik.port=80"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /xapi"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.entryPoints.http.whiteList.useXForwardedFor=true"
-                  - "traefik.webservice.frontend.entryPoints=https"
-                  - "traefik.backend.loadbalancer.stickiness=false"
-                  - "traefik.backend.loadbalancer.method=drr"
+                  - "traefik.http.routers.xapi-http.entrypoints=http"
+                  - "traefik.http.routers.xapi-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.xapi-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/xapi`)"
+                  - "traefik.http.routers.xapi-https.middlewares=xapi-https-stripprefix, xapi-ipwhitelist"
+                  - "traefik.http.middlewares.xapi-https-stripprefix.stripprefix.prefixes=/xapi"
+                  - "traefik.http.routers.xapi-https.entrypoints=https"
+                  - "traefik.http.routers.xapi-https.tls=true"
+                  - "traefik.http.routers.xapi-https.tls.certresolver=le"
+                  - "traefik.http.services.xapi.loadbalancer.server.port=80"
+                  - "traefik.http.middlewares.xapi-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
+                  - "traefik.http.services.xapi.loadbalancer.sticky.cookie=true"
+                  - "traefik.http.services.xapi.loadbalancer.sticky.cookie.name=xapi_cookie"
                 placement:
                   constraints:
                     - node.role != manager
@@ -804,13 +847,18 @@
                   condition: on-failure
                 labels:
                   - "traefik.enable=true"
-                  - "traefik.backend=pitschidashboard"
-                  - "traefik.port=80"
-                  - "traefik.frontend.rule={{ traefik_host }}PathPrefixStrip: /dashboard"
                   - "traefik.docker.network=clowder"
-                  - "traefik.redirectorservice.frontend.entryPoints=http"
-                  - "traefik.redirectorservice.frontend.redirect.entryPoint=https"
-                  - "traefik.webservice.frontend.entryPoints=https"
+                  - "traefik.http.routers.pdb-http.entrypoints=http"
+                  - "traefik.http.routers.pdb-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.pdb-https.entrypoints=https"
+                  - "traefik.http.routers.pdb-https.tls=true"
+                  - "traefik.http.routers.pdb-https.tls.certresolver=le"
+                  - "traefik.http.services.pdb.loadbalancer.server.port=80"
+                  - "traefik.http.routers.pdb-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/dashboard`)"
+                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix"
+                  - "traefik.http.middlewares.pdb-https-stripprefix.stripprefix.prefixes=/dashboard"
                 placement:
                   constraints:
                     - node.role == manager

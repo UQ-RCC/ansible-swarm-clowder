@@ -5,7 +5,6 @@
     host_key_checking: False
   vars_files:
     - vars/vars.yml
-    - vars/secrets.yml
   tasks:
   roles:
     - { role: apt-get-upgrade }
