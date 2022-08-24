@@ -6,6 +6,27 @@
   tasks:
   - include_vars: vars/vars.yml
 
+  - name: delete default docker_gwbridge
+    docker_network:
+      name: docker_gwbridge
+      state: absent
+      force: yes
+  
+  - name: create new docker_gwbridge
+    docker_network:
+      name: docker_gwbridge
+      driver: "bridge"
+      attachable: "no"
+      enable_ipv6: "no"
+      state: present
+      ipam_config:
+        - subnet: "18.7.0.0/16"
+          gateway: "18.7.0.1"
+      driver_options:
+        com.docker.network.bridge.enable_icc: "false"
+        com.docker.network.bridge.enable_ip_masquerade: "true"
+        com.docker.network.bridge.name: "docker_gwbridge"
+
 
   - name: Init swarm on the first node
     docker_swarm:
