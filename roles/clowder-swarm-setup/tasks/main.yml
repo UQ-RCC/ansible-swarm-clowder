@@ -862,7 +862,8 @@
                   - "traefik.http.routers.pdb-https.tls.certresolver=le"
                   - "traefik.http.services.pdb.loadbalancer.server.port=80"
                   - "traefik.http.routers.pdb-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/dashboard`)"
-                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix"
+                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix, pdb-ipwhitelist"
+                  - "traefik.http.middlewares.pdb-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
                   - "traefik.http.middlewares.pdb-https-stripprefix.stripprefix.prefixes=/dashboard"
                 placement:
                   constraints:
