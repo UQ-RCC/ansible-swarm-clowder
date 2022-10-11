@@ -10,8 +10,12 @@ if wait $pid 2>/dev/null; then
     pkill -HUP -P $watcher
     wait $watcher
 else
+    title="NFS Problem"
+    message="Problem listing ${DIR_TO_WATCH}. Host: $(hostname)."
     echo "NFS mount problem. Notify telegram"
     TELEGRAM_API_URL="https://api.telegram.org/bot{{ telegram_token }}/sendMessage"
-    hostname=$(hostname)
-    curl -s -X POST ${TELEGRAM_API_URL} -d chat_id={{ telegram_chat_group_id }} -d text="[NFS Problem]: Problem listing ${DIR_TO_WATCH}. Host: ${hostname}."
+    curl -s -X POST ${TELEGRAM_API_URL} -d chat_id={{ telegram_chat_group_id }} -d text="[${title}]: ${message}"
+    echo "NFS mount problem. Notifing teams channel"
+    payload='{"@context": "https://schema.org/extensions", "@type": "MessageCard", "themeColor": "c60000", "title": "[Error] '${title}'", "text": "'${message}'"}'
+    curl -s -X POST "{{ teams_webhook }}" -H "Content-Type: application/json" -d "${payload}"
 fi
