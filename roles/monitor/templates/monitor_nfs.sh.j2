@@ -1,7 +1,7 @@
 #!/bin/bash
 ############################################
 # This script monitor NFS @ each node. 
-# If there is problem, send a message to telegram
+# If there is problem, send a message to teams
 DIR_TO_WATCH={{ nfs_dir_to_watch }}
 ( ls ${DIR_TO_WATCH} ) & pid=$!
 ( sleep {{ timeout }}  && kill -HUP $pid ) 2>/dev/null & watcher=$!
@@ -10,9 +10,9 @@ if wait $pid 2>/dev/null; then
     pkill -HUP -P $watcher
     wait $watcher
 else
+    echo "NFS mount problem. Notifying teams channel"
     title="NFS Problem"
     message="Problem listing ${DIR_TO_WATCH}. Host: $(hostname)."
-    echo "NFS mount problem. Notifying teams channel"
     payload='{"@context": "https://schema.org/extensions", "@type": "MessageCard", "themeColor": "c60000", "title": "[Error] '${title}'", "text": "'${message}'"}'
     curl -s -X POST "{{ teams_webhook }}" -H "Content-Type: application/json" -d "${payload}"
 fi

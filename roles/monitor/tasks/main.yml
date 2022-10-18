@@ -7,7 +7,7 @@
     update_cache: yes
   when: ansible_distribution == "Ubuntu"
 
-#### file for backing up gluster
+#### file for monitoring nfs mount
 - block:
   - name: add monitor nfs
     template:
@@ -19,7 +19,7 @@
   - name: monitor NFS
     cron:
       name: "pitschi monitor NFS"
-      minute: "30"
+      minute: "45"
       job: "/usr/bin/monitor_nfs.sh"
   # in dev, all nodes participate in gluster cluster
   when: inventory_hostname in groups['SwarmSlave']
