@@ -51,7 +51,26 @@ Thanks to Zane Van Iperen for his work on Makefile and templates.
 
 * **make destroy-swarm**
 
+## Restart glusterd and autofs
+
+* **make reloadautofs**
+
+## Check/restart gluster volumes
+
+* **gluster volume status all**
+* **gluster volume stop gfs**
+* **gluster volume start gfs**
+
 ## Delete stack
 
 * **make destroy-stack**
 
+## Redeploy xxapi1 and xxapi2
+
+* remove xapi stack on xxapi1 and xxapi2
+  * **docker service ls**
+  * **docker stack rm xapi**
+  * **docker service ls**
+  * **docker ps**
+* deploy from github/ansible-swarm-clowder
+  * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
