@@ -131,6 +131,9 @@
 #       type: none
 #       device: /mnt/portainer
 
+
+
+
 ####### copy configs ###########
 - block:
   - name: copy custom.play.plugins
@@ -204,6 +207,13 @@
     force: "yes"
     backup: "yes"
 
+- name: copy pitschi_maintenance.conf.j2
+  template:
+    src: "pitschi_maintenance.conf.j2"
+    dest: "/pitschi_maintenance.conf.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
 
 
 - block:
@@ -414,7 +424,7 @@
                   - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
                   - "traefik.http.routers.traefik-public-http.entrypoints=http"
                   - "traefik.http.routers.traefik-public-http.middlewares=https-redirect"
-                  - "traefik.http.routers.traefik-public-https.middlewares=traefik-ipwhitelist, traefik-auth"
+                  - "traefik.http.routers.traefik-public-https.middlewares=traefik-ipwhitelist, traefik-auth, error-pages-middleware"
                   - "traefik.http.routers.traefik-public-https.rule=Host(`{{ traefik_dns }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
                   - "traefik.http.routers.traefik-public-https.entrypoints=https"
                   - "traefik.http.routers.traefik-public-https.service=api@internal"
@@ -856,12 +866,42 @@
                   - "traefik.http.routers.pdb-https.tls.certresolver=le"
                   - "traefik.http.services.pdb.loadbalancer.server.port=80"
                   - "traefik.http.routers.pdb-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/dashboard`)"
-                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix, pdb-ipwhitelist"
+                  - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix, pdb-ipwhitelist, error-pages"
                   - "traefik.http.middlewares.pdb-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
                   - "traefik.http.middlewares.pdb-https-stripprefix.stripprefix.prefixes=/dashboard"
                 placement:
                   constraints:
                     - node.role == manager
+            
+            ####   maintanance error services  ###
+            catch-all:
+              image: nginx:stable
+              volumes:
+                - ./pages:/usr/share/nginx/html
+                - /pitschi_maintenance.conf:/etc/nginx/conf.d/pitschi_maintenance.conf
+                - /etc/localtime:/etc/localtime:ro
+              labels:
+                "traefik.enable: true"
+                "traefik.http.services.catch-all.loadbalancer.server.port: 80"
+                "traefik.http.routers.catch-all.entrypoints: http"
+                "traefik.http.routers.catch-all.rule: HostRegexp(`{host:.+}`)"
+                "traefik.http.routers.catch-all.priority: 1"
+
+            error-pages:
+              image: nginx:stable
+              volumes:
+                - ./pages:/usr/share/nginx/html
+                -  /pitschi_maintenance.conf:/etc/nginx/conf.d/pitschi_maintenance.conf
+                - /etc/localtime:/etc/localtime:ro
+              labels:
+                "traefik.enable: true"
+                "traefik.http.services.error-pages.loadbalancer.server.port: 80"
+                "traefik.http.routers.error-pages.entrypoints: http"
+                "traefik.http.routers.error-pages.rule: HostRegexp(`error-pages.127.0.0.1.nip.io`)"
+                "traefik.http.routers.error-pages.priority: 2"
+                "traefik.http.middlewares.error-pages.errors.status: 400-599"
+                "traefik.http.middlewares.error-pages.errors.service: error-pages"
+                "traefik.http.middlewares.error-pages.errors.query: /pitschi_error.html"
 
           networks:
             clowder:
