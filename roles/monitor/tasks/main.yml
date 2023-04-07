@@ -22,5 +22,6 @@
       minute: "45"
       job: "/usr/bin/monitor_nfs.sh"
   # in dev, all nodes participate in gluster cluster
-  when: inventory_hostname in groups['SwarmSlave']
+  #when: inventory_hostname in groups['SwarmSlave']
+  when: false
 

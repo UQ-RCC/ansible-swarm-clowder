@@ -1,0 +1,23 @@
+---
+- hosts: SwarmMaster, SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+    pause_sec: 5
+  tasks:
+  - name: docker system prune -f
+    docker_prune:
+      builder_cache: yes
+      containers: yes
+      images: yes
+      networks: yes
+  - name: "wait {{ pause_sec }} seconds"
+    pause:
+      seconds: "{{ pause_sec }}"
+  - name: restart docker.service
+    service:
+      name: docker
+      state: restarted
+  - name: "wait {{ pause_sec }} seconds"
+    pause:
+      seconds: "{{ pause_sec }}"

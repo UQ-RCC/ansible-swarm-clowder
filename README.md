@@ -57,20 +57,99 @@ Thanks to Zane Van Iperen for his work on Makefile and templates.
 
 ## Check/restart gluster volumes
 
-* **gluster volume status all**
-* **gluster volume stop gfs**
-* **gluster volume start gfs**
+On worker/slave nodes
+
+* **sudo gluster volume status all**
+* **sudo gluster volume stop gfs**
+* **sudo gluster volume start gfs**
+
+gfs volume status should show 3 bricks and 3 daemons online
+
+# Check clowder overlay network
+
+* Network should be okay if each traefik/xapi container has an IP address and 6 peers
+
+  * **make inspect-network**
+
+# Docker system prune
+
+* Prune orphaned docker images, containers, networks, build cache, and restart
+  docker daemon. Cleans up orphaned resources in docker system on each node.
+
+  * **make prune-docker**
 
 ## Delete stack
 
 * **make destroy-stack**
 
+## App redeploy
+
+1. Remove app
+
+   * **make destroy-clowder**
+
+2. Deploy app
+
+   * **make deploy-clowder**
+
+## App and swarm redeploy
+
+1. Remove app
+
+   * **make destroy-clowder**
+
+2. Remove swarm cluster
+
+   * **make destroy-swarm**
+
+3. Build swarm cluster
+
+   * **make init-swarm**
+
+4. Deploy app
+
+   * **make deploy-clowder**
+
+## Full redeploy
+
+1. Remove app
+
+   * **make destroy-clowder**
+
+2. Remove swarm cluster
+
+   * **make destroy-swarm**
+
+3. Prune docker
+
+   * **make prune-docker**
+
+4. Restart gluster and autofs
+
+   * **make reloadautofs**
+
+5. Build swarm cluster
+
+   * **make init-swarm**
+
+6. Deploy app
+
+   * **make deploy-clowder**
+
+## Node reboots
+
+Remove app, swarm cluster, then stop gfs volume on worker/slave nodes. After
+reboot, start gfs volume on worker nodes, then build swarm and deploy app. 
+
 ## Redeploy xxapi1 and xxapi2
 
-* remove xapi stack on xxapi1 and xxapi2
-  * **docker service ls**
-  * **docker stack rm xapi**
-  * **docker service ls**
-  * **docker ps**
-* deploy from github/ansible-swarm-clowder
-  * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
+1. remove xapi stack on xxapi1 and xxapi2
+
+   * **docker service ls**
+   * **docker stack rm xapi**
+   * **docker service ls**
+   * **docker ps**
+
+2. deploy from github/ansible-swarm-clowder
+
+   * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**

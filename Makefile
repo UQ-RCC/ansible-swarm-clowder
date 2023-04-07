@@ -46,11 +46,17 @@ bootstrap: bootstrap.yml
 reloadautofs: autofs-reload.yml
 	ansible-playbook -i inventory.yml autofs-reload.yml
 
+prune-docker: prune-docker.yml
+	ansible-playbook -i inventory.yml prune-docker.yml
+
 init-swarm: init-swarm-cluster.yml
 	ansible-playbook -i inventory.yml init-swarm-cluster.yml
 
 inspect-swarm: inspect-swarm-cluster.yml
 	ansible-playbook -i inventory.yml inspect-swarm-cluster.yml
+
+inspect-network: inspect-network.yml
+	ansible-playbook -i inventory.yml inspect-network.yml
 
 destroy-swarm: destroy-swarm-cluster.yml
 	ansible-playbook -i inventory.yml destroy-swarm-cluster.yml

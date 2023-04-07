@@ -1,0 +1,27 @@
+---
+- hosts: SwarmMaster
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - name: inspect clowder network
+    docker_network_info:
+      name: clowder
+    register: result
+  - name: docker inspect network clowder info
+    debug:
+      msg: "{% for c in result.network.Containers if result.network.Containers[c].Name.startswith('clowder_traefik.') %}IP: {{ result.network.Containers[c].IPv4Address.split('/')[0] }}, Peers: {{ result.network.Peers|length }}{% endfor %}"
+
+- hosts: SwarmSlave
+  become: yes
+  vars:
+    host_key_checking: False
+  tasks:
+  - name: inspect clowder network
+    docker_network_info:
+      name: clowder
+    register: result
+  - name: docker inspect network clowder info
+    debug:
+      msg: "{% for c in result.network.Containers if result.network.Containers[c].Name.startswith('clowder_xapi.') %}IP: {{ result.network.Containers[c].IPv4Address.split('/')[0] }}, Peers: {{ result.network.Peers|length }}{% endfor %}"
+
