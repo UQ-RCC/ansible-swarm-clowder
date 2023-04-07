@@ -41,8 +41,6 @@ Thanks to Zane Van Iperen for his work on Makefile and templates.
 
 * **make deploy-clowder**
 
-### 
-
 ## Destroy Clowder in swarm
 
 * **make destroy-clowder**
@@ -65,24 +63,39 @@ On worker/slave nodes
 
 gfs volume status should show 3 bricks and 3 daemons online
 
-# Check clowder overlay network
+## Check clowder overlay network
 
 * Network should be okay if each traefik/xapi container has an IP address and 6 peers
 
   * **make inspect-network**
 
-# Docker system prune
+## Docker system prune
 
 * Prune orphaned docker images, containers, networks, build cache, and restart
   docker daemon. Cleans up orphaned resources in docker system on each node.
 
   * **make prune-docker**
 
+## Redeploy xxapi1 and xxapi2
+
+1. remove xapi stack on xxapi1 and xxapi2
+
+   * **docker service ls**
+   * **docker stack rm xapi**
+   * **docker service ls**
+   * **docker ps**
+
+2. deploy from github/ansible-swarm-clowder
+
+   * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
+
 ## Delete stack
 
 * **make destroy-stack**
 
-## App redeploy
+# Deployment approaches
+
+## App redeploy only
 
 1. Remove app
 
@@ -110,7 +123,7 @@ gfs volume status should show 3 bricks and 3 daemons online
 
    * **make deploy-clowder**
 
-## Full redeploy
+## Full redeploy with docker prune
 
 1. Remove app
 
@@ -136,20 +149,7 @@ gfs volume status should show 3 bricks and 3 daemons online
 
    * **make deploy-clowder**
 
-## Node reboots
+# Node reboots
 
 Remove app, swarm cluster, then stop gfs volume on worker/slave nodes. After
 reboot, start gfs volume on worker nodes, then build swarm and deploy app. 
-
-## Redeploy xxapi1 and xxapi2
-
-1. remove xapi stack on xxapi1 and xxapi2
-
-   * **docker service ls**
-   * **docker stack rm xapi**
-   * **docker service ls**
-   * **docker ps**
-
-2. deploy from github/ansible-swarm-clowder
-
-   * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
