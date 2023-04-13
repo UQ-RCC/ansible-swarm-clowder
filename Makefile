@@ -37,6 +37,12 @@ clean:
 inventory.yml: ${HEAT_TEMPLATE} make_inventory_openstack.py
 	./make_inventory_openstack.py ${STACK_NAME} > $@
 
+setenv-prod: setenv.sh
+	./setenv.sh
+
+setenv-dev: setenv.sh
+	./setenv.sh dev
+
 inventories: check-vars inventory.yml
 
 # bootstrap: inventories bootstrap.yml

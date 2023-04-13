@@ -95,6 +95,18 @@ gfs volume status should show 3 bricks and 3 daemons online
 
 # Deployment approaches
 
+## Set target environment
+
+To change the target environment for deployment steps
+
+* For production deployments use
+
+  * **make setenv-prod**
+
+* For development deployments use
+
+  * **make setenv-dev**
+
 ## App redeploy only
 
 1. Remove app
