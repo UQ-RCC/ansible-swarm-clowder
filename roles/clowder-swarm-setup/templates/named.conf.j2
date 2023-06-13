@@ -1,0 +1,14 @@
+options {
+  directory "/home/clowder/extra";
+  pid-file "/home/clowder/named.pid";
+  listen-on { {{ openid_dns_server }}; };
+  recursion yes;
+  allow-recursion { {{ openid_dns_server }}/32; };
+  forwarders { {{ docker_dns_server }}; };
+  dnssec-validation no;
+};
+
+zone "{{ openid_host |regex_replace('^[^.]*[.](.*)$', '\\1') }}" IN {
+  type master;
+  file "openid.zone";
+};

@@ -12,6 +12,9 @@ clowder_image: uqrcc/clowder:pitschi1.20.2
 clowder_register: 'false'
 clowder_context: /
 clowder_ssl: 'true'
+clowder_subnet: 17.7.0.0/16
+docker_dns_server: 127.0.0.11
+openid_dns_server: 127.0.0.1
 rabbitmq_exchange: clowder
 rabbitmq_clowder_url: http://clowder:9000 # for local - or things like https://clowder-docker.ncsa.illinois.edu/clowder/ for remote
 smtp_mock: 'true'

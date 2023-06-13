@@ -1,0 +1,11 @@
+$TTL 86400
+@       IN  SOA ns.{{ openid_host |regex_replace('^[^.]*[.](.*)$', '\\1') }}. root.{{ openid_host |regex_replace('^[^.]*[.](.*)$', '\\1') }}. (
+            2017062705 ;Serial - update in updating zone file
+            3600       ;Refresh
+            900        ;Retry
+            604800     ;Expire
+            86400      ;Minimum TTL
+)
+        IN  NS     ns
+ns      IN  A      {{ openid_dns_server }}
+{{ openid_host |regex_replace('^([^.]*)[.].*$', '\\1') }} IN  CNAME  traefik.clowder.

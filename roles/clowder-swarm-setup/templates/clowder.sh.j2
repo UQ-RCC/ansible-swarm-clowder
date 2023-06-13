@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# dns server required to direct openid endpoint to traefik
+named -c /home/clowder/extra/named.conf
+
+# add traefik self-signed cert for openid endpoint to java keystore
+cacerts=/home/clowder/extra/cacerts.jks
+if [[ ! -e ${cacerts} ]] ; then
+  cacerts_in=${JAVA_HOME}/jre/lib/security/cacerts
+  storepass=changeit
+  cert=/tmp/cert.prm
+  echo "{{ openid_cert }}" >${cert}
+  cp ${cacerts_in} ${cacerts}
+  chmod 644 ${cacerts}
+  keytool -import -noprompt -alias {{ openid_host }} -file ${cert} \
+    -keystore ${cacerts} -keypass ${storepass} -storepass ${storepass}
+  chmod 444 ${cacerts}
+  rm ${cert}
+fi
+
+rm -f /home/clowder/RUNNING_PID
+exec /home/clowder/bin/clowder -Djavax.net.ssl.trustStore=${cacerts} -DMONGOUPDATE=1 -DPOSTGRESUPDATE=1 -Dpidfile.path=/dev/null $*

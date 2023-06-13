@@ -1,0 +1,26 @@
+http:
+  middlewares:
+    openid-header:
+      headers:
+        customRequestHeaders:
+          Host: "{{ openid_host }}"
+    openid-ipwhitelist:
+      ipwhitelist:
+        sourceRange: # {{ allslaves_second_ips }}
+        - "{{ clowder_subnet }}"
+
+  routers:
+    openid-router:
+      entryPoints: ["https"]
+      rule: "HostRegexp(`{host:^{{ openid_host }}$}`)"
+      service: "openid-svc"
+      middlewares: 
+      - "openid-header"
+      - "openid-ipwhitelist"
+      tls: {}
+
+  services:
+    openid-svc:
+      loadBalancer:
+        servers:
+        - url: "https://{{ openid_host }}/"

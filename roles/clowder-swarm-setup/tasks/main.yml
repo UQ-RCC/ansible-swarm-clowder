@@ -22,8 +22,9 @@
       mode: '0755'
   - name: clowder
     file:
-      path: /mnt/clowder
+      path: /mnt/clowder/extra
       state: directory
+      owner: '10001'
       mode: '0755'
   - name: rabbitmq
     file:
@@ -44,9 +45,14 @@
   when: inventory_hostname in groups['SwarmSlave']
 
 - block:
-  - name: traefik
+  - name: traefik conf.d
     file:
-      path: /mnt/traefik
+      path: /mnt/traefik/conf.d
+      state: directory
+      mode: '0755'
+  - name: traefik certs
+    file:
+      path: /mnt/traefik/certs
       state: directory
       mode: '0755'
   - name: consul
@@ -137,7 +143,7 @@
     template:
       #src: "custom.play.plugins.withoutppms.j2"
       src: "custom.play.plugins.j2"
-      dest: "/custom.play.plugins"
+      dest: "/mnt/clowder/custom.play.plugins"
       mode: '0755'
       force: "yes"
       backup: "yes"
@@ -154,7 +160,7 @@
   - name: copy custom play plugsin without ppms 
     template:
       src: "custom.play.plugins.withoutppms.j2"
-      dest: "/custom.play.plugins"
+      dest: "/mnt/clowder/custom.play.plugins"
       mode: '0755'
       force: "yes"
       backup: "yes"
@@ -178,14 +184,68 @@
     backup: "yes"
   when: inventory_hostname==groups['SwarmSlave'][2]
 
-- name: copy custom.conf
-  template:
-    src: "custom.conf.j2"
-    dest: "/custom.conf"
-    mode: '0755'
-    force: "yes"
-    backup: "yes"
+- block:
+  - name: copy custom.conf
+    template:
+      src: "custom.conf.j2"
+      dest: "/mnt/clowder/custom.conf"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy clowder.sh.j2
+    template:
+      src: "clowder.sh.j2"
+      dest: "/mnt/clowder/clowder.sh"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy resolv.conf.j2
+    template:
+      src: "resolv.conf.j2"
+      dest: "/mnt/clowder/resolv.conf"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy named.conf.j2
+    template:
+      src: "named.conf.j2"
+      dest: "/mnt/clowder/extra/named.conf"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy openid.zone.j2
+    template:
+      src: "openid.zone.j2"
+      dest: "/mnt/clowder/extra/openid.zone"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
   when: inventory_hostname in groups['SwarmSlave']
+
+- block:
+  - name: copy traefik_openid.yml
+    template:
+      src: "traefik_openid.yml.j2"
+      dest: "/mnt/traefik/conf.d/openid.yml"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name: copy traefik_tls.yml
+    template:
+      src: "traefik_tls.yml.j2"
+      dest: "/mnt/traefik/conf.d/tls.yml"
+      mode: '0755'
+      force: "yes"
+      backup: "yes"
+  - name:
+    copy:
+      content: "{{ openid_cert }}"
+      dest: "/mnt/traefik/{{ openid_certfile }}"
+  - name:
+    copy:
+      content: "{{ openid_key }}"
+      dest: "/mnt/traefik/{{ openid_keyfile }}"
+  when: inventory_hostname in groups['SwarmMaster']
 
 - name: copy rabbitmq.confg.j2
   template:
@@ -213,7 +273,7 @@
       driver: "overlay"
       attachable: "yes"
       ipam_config:
-        - subnet: 17.7.0.0/16
+        - subnet: "{{ clowder_subnet }}"
 
     ######################################################
     ### escluster ###
@@ -376,6 +436,8 @@
                 - "--providers.docker.exposedbydefault=false"
                 - "--providers.docker.watch"
                 - "--providers.docker.network=clowder"
+                # Add SNI extension missing from clowder TLS client
+                - "--providers.file.directory=/config/conf.d"
                 # CONSUL
                 # - "--providers.consul.endpoints=consulmaster:8500"
                 # LOG
@@ -442,8 +504,11 @@
               volumes:
                 - /clowder_data/:/home/clowder/data
                 - qcollections_volume:/data
-                - /custom.conf:/home/clowder/custom/custom.conf
-                - /custom.play.plugins:/home/clowder/custom/play.plugins
+                - /mnt/clowder/custom.conf:/home/clowder/custom/custom.conf
+                - /mnt/clowder/custom.play.plugins:/home/clowder/custom/play.plugins
+                - /mnt/clowder/clowder.sh:/home/clowder/clowder.sh
+                - /mnt/clowder/resolv.conf:/etc/resolv.conf
+                - /mnt/clowder/extra:/home/clowder/extra
               deploy:
                 mode: global
                 restart_policy:
