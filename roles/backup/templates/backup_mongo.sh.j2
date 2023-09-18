@@ -17,13 +17,14 @@ fi
 
 ###
 today=$(date '+%d-%m-%Y')
-mkdir "/tmp/${today}"
+mkdir "/mnt/tmp/${today}"
 
 # TODO: mongo_mongo should not be hardcoded
 docker exec $(docker ps -q -f name=mongo_mongo) mongodump -o /mnt/ --uri="mongodb://mongo:27017/clowder?replicaSet=clowder"
-docker cp $(docker ps -q -f name=mongo_mongo):/mnt/clowder "/tmp/${today}"
+docker cp $(docker ps -q -f name=mongo_mongo):/mnt/clowder "/mnt/tmp/${today}"
 docker exec $(docker ps -q -f name=mongo_mongo) rm -rf /mnt/clowder
 
-tar cvfz "/tmp/${today}/mongo.tar.gz" "/tmp/${today}/clowder"
-/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/tmp/${today}/mongo.tar.gz" --object-name "${today}/mongo.tar.gz"
-rm -rf "/tmp/${today}"
+tgz_file_name="mongo-{{ inventory_hostname }}.tar.gz"
+tar cvfz "/mnt/tmp/${today}/${tgz_file_name}" "/mnt/tmp/${today}/clowder"
+/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/mnt/tmp/${today}/${tgz_file_name}" --object-name "${today}/${tgz_file_name}"
+rm -rf "/mnt/tmp/${today}"

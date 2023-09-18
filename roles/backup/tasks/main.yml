@@ -7,25 +7,6 @@
     update_cache: yes
   when: ansible_distribution == "Ubuntu"
 
-#### file for backing up gluster
-- block:
-  - name: add backup gluster
-    template:
-      src: backup_gluster.sh.j2
-      dest: "/usr/bin/pitschi_backup_gluster.sh"
-      owner: root
-      group: root
-      mode: 0700
-  - name: Backup gluster
-    cron:
-      name: "pitschi backup gluster"
-      weekday: "0"
-      minute: "0"
-      hour: "1"
-      job: "/usr/bin/pitschi_backup_gluster.sh"
-  # in dev, all nodes participate in gluster cluster
-  when: inventory_hostname in groups['SwarmSlave']
-
 #### file for backing up xapi
 - block:
   - name: add backup xapidb
