@@ -264,6 +264,14 @@
     force: "yes"
     backup: "yes"
 
+- name: copy rims_dashboard_config.json.j2
+  template:
+    src: "rims_dashboard_config.json.j2"
+    dest: "/rims_dashboard_config.json"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
 
 
 - block:
@@ -924,6 +932,37 @@
                   - "traefik.http.routers.pdb-https.middlewares=pdb-https-stripprefix, pdb-ipwhitelist"
                   - "traefik.http.middlewares.pdb-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
                   - "traefik.http.middlewares.pdb-https-stripprefix.stripprefix.prefixes=/dashboard"
+                placement:
+                  constraints:
+                    - node.role == manager
+
+            rimsdashboard:
+              image: "{{ rims_dashboard_image }}"
+              restart: unless-stopped
+              networks:
+                - clowder
+              volumes:
+                - /rims_dashboard_config.json:/usr/share/nginx/html/config.json
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.http.routers.rdb-http.entrypoints=http"
+                  - "traefik.http.routers.rdb-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.rdb-https.entrypoints=https"
+                  - "traefik.http.routers.rdb-https.tls=true"
+                  - "traefik.http.routers.rdb-https.tls.certresolver=le"
+                  - "traefik.http.services.rdb.loadbalancer.server.port=80"
+                  - "traefik.http.routers.rdb-https.rule=Host(`{{ pitschi_dns }}`) && PathPrefix(`/rims-dashboard`)"
+                  - "traefik.http.routers.rdb-https.middlewares=rdb-https-stripprefix, rdb-ipwhitelist"
+                  - "traefik.http.middlewares.rdb-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
+                  - "traefik.http.middlewares.rdb-https-stripprefix.stripprefix.prefixes=/rims-dashboard"
                 placement:
                   constraints:
                     - node.role == manager
