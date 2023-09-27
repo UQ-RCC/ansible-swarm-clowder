@@ -272,6 +272,14 @@
     force: "yes"
     backup: "yes"
 
+- name: copy rims_dash_api.conf.j2
+  template:
+    src: "rims_dash_api.conf.j2"
+    dest: "/rimsdash.conf"
+    mode: '0755'
+    force: "yes"
+    backup: "yes"
+
 
 
 - block:
@@ -936,11 +944,53 @@
                   constraints:
                     - node.role == manager
 
+            rapi:
+              image: "{{ rims_dash_api_image }}"
+              networks:
+                - clowder
+              environment:
+                - FLASK_DEBUG=0
+                - DATABASE_URL={{ rapi_db_url }}
+                - SQL_HOST={{ rapi_host }}
+                - SQL_PORT={{ rapi_port }}
+                - DATABASE={{ rapi_db }}
+                - APP_FOLDER=/app
+              command: ["gunicorn","--bind","0.0.0.0:80","rimsboard.manager:app"]
+              volumes:
+                - /rimsdash.conf:/app/conf/rimsdash.conf
+              deploy:
+                mode: global
+                # endpoint_mode: dnsrr
+                restart_policy:
+                  condition: on-failure
+                labels:
+                  - "traefik.enable=true"
+                  - "traefik.docker.network=clowder"
+                  - "traefik.http.routers.rapi-http.entrypoints=http"
+                  - "traefik.http.routers.rapi-http.middlewares=https-redirect"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                  - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+                  - "traefik.http.routers.rapi-https.rule=host(`{{ pitschi_dns }}`) && pathprefix(`/rapi`)"
+                  - "traefik.http.routers.rapi-https.middlewares=rapi-https-stripprefix, rapi-ipwhitelist"
+                  - "traefik.http.middlewares.rapi-https-stripprefix.stripprefix.prefixes=/rapi"
+                  - "traefik.http.routers.rapi-https.entrypoints=https"
+                  - "traefik.http.routers.rapi-https.tls=true"
+                  - "traefik.http.routers.rapi-https.tls.certresolver=le"
+                  - "traefik.http.services.rapi.loadbalancer.server.port=80"
+                  - "traefik.http.middlewares.rapi-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
+                  - "traefik.http.services.rapi.loadbalancer.sticky.cookie=true"
+                  - "traefik.http.services.rapi.loadbalancer.sticky.cookie.name=rapi_cookie"
+                placement:
+                  constraints:
+                    - node.hostname=={{ groups['SwarmMaster'][2] }}
+
             rimsdashboard:
               image: "{{ rims_dashboard_image }}"
               restart: unless-stopped
               networks:
                 - clowder
+              depends_on:
+                - rapi
               volumes:
                 - /rims_dashboard_config.json:/usr/share/nginx/html/config.json
               deploy:
@@ -965,7 +1015,7 @@
                   - "traefik.http.middlewares.rdb-https-stripprefix.stripprefix.prefixes=/rims-dashboard"
                 placement:
                   constraints:
-                    - node.role == manager
+                    - node.hostname=={{ groups['SwarmMaster'][2] }}
 
           networks:
             clowder:
