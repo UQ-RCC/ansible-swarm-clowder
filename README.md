@@ -97,7 +97,8 @@ gfs volume status should show 3 bricks and 3 daemons online
 
 ## Set target environment
 
-To change the target environment for deployment steps
+To change the target environment for deployment steps (requires soft-links to
+inventory.yml and secrets.yml)
 
 * For production deployments use
 
