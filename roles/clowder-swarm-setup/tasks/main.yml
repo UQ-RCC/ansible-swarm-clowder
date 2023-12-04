@@ -62,6 +62,13 @@
       mode: '0755'
   when: inventory_hostname in groups['SwarmMaster']
 
+- block:
+  - name: rapi
+    file:
+      path: /mnt/rapi-data
+      state: directory
+      mode: '0755'
+  when: inventory_hostname==groups['SwarmMaster'][2]
 
 #### volumes for docker #############
 # - name: create 
@@ -944,10 +951,35 @@
                   constraints:
                     - node.role == manager
 
-            rapi:
-              image: "{{ rims_dash_api_image }}"
+            ### rims backend api
+            # ----------------------------------------------------------------------
+            # Postgres DB
+            # ----------------------------------------------------------------------
+            rapidb:
+              image: "{{ pitschi_xapi_db_image }}"
               networks:
                 - clowder
+              environment:
+                - POSTGRES_USER={{ rapi_user }}
+                - POSTGRES_PASSWORD={{ rapi_pass }}
+                - POSTGRES_DB={{ rapi_db }}
+              volumes:
+                - /mnt/rapi-data:/var/lib/postgresql/data
+              deploy:
+                mode: replicated
+                replicas: 1
+                restart_policy:
+                  condition: on-failure
+                placement:
+                  constraints:
+                    - node.hostname=={{ groups['SwarmMaster'][2] }}
+
+            rapi:
+              image: "{{ rims_dash_backend_image }}"
+              networks:
+                - clowder
+              depends_on:
+                - rapidb
               environment:
                 - FLASK_DEBUG=0
                 - DATABASE_URL={{ rapi_db_url }}
@@ -955,7 +987,6 @@
                 - SQL_PORT={{ rapi_port }}
                 - DATABASE={{ rapi_db }}
                 - APP_FOLDER=/app
-              command: ["gunicorn","--bind","0.0.0.0:80","rimsboard.manager:app"]
               volumes:
                 - /rimsdash.conf:/app/conf/rimsdash.conf
               deploy:
@@ -976,7 +1007,7 @@
                   - "traefik.http.routers.rapi-https.entrypoints=https"
                   - "traefik.http.routers.rapi-https.tls=true"
                   - "traefik.http.routers.rapi-https.tls.certresolver=le"
-                  - "traefik.http.services.rapi.loadbalancer.server.port=80"
+                  - "traefik.http.services.rapi.loadbalancer.server.port=5000"
                   - "traefik.http.middlewares.rapi-ipwhitelist.ipwhitelist.sourcerange={{ xapi_ip_filters }}"
                   - "traefik.http.services.rapi.loadbalancer.sticky.cookie=true"
                   - "traefik.http.services.rapi.loadbalancer.sticky.cookie.name=rapi_cookie"
@@ -985,7 +1016,7 @@
                     - node.hostname=={{ groups['SwarmMaster'][2] }}
 
             rimsdashboard:
-              image: "{{ rims_dashboard_image }}"
+              image: "{{ rims_dash_frontend_image }}"
               restart: unless-stopped
               networks:
                 - clowder
