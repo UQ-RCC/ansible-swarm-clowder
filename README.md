@@ -85,6 +85,11 @@ gfs volume status should show 3 bricks and 3 daemons online
    * **docker service ls**
    * **docker ps**
 
+   optional
+
+   * **docker system prune -f**
+   * **docker network create clowder --driver overlay --scope swarm**
+
 2. deploy from github/ansible-swarm-clowder
 
    * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
