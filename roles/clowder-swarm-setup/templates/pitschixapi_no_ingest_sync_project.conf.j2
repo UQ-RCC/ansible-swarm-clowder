@@ -12,7 +12,7 @@ password={{ pitschi_password }}
 smtp_server={{ pitschi_smtp_server }}
 smtp_port={{ pitschi_smtp_port }}
 smtp_tls={{ pitschi_smtp_tls }}
-enabled=yes
+enabled={{ pitschi_email_enabled }}
 
 [logging]
 log_file=/var/log/pitschi-xapi.log
@@ -30,7 +30,7 @@ qcollection_action={{ ppms_extra_profile_action }}
 q_collection_field={{ ppms_storage_field }}
 booking_query=Report39
 training_query=Report1828
-coreid=2
+coreids=[2,22]
 timezone=Australia/Brisbane
 
 [rdm]
@@ -58,7 +58,7 @@ token_url={{ keycloak_token_url }}
 public_key={{ keycloak_public_key }}
 
 [miscs]
-xapi_alerts_enabled=yes
+xapi_alerts_enabled={{ xapi_alerts_enabled }}
 teams_webhook={{ teams_webhook }}
 
 [creds]
