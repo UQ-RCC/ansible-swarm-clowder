@@ -73,6 +73,19 @@ deploy-clowder: clowder.yml
 destroy-clowder: clowder.yml
 	ansible-playbook -i inventory.yml clowder.yml --tags=destroy
 
+redeploy-clowder: clowder.yml destroy-swarm-cluster.yml prune-docker.yml autofs-reload.yml init-swarm-cluster.yml
+	ansible-playbook -i inventory.yml clowder.yml --tags=destroy
+	sleep 2
+	ansible-playbook -i inventory.yml destroy-swarm-cluster.yml
+	sleep 2
+	ansible-playbook -i inventory.yml prune-docker.yml
+	sleep 2
+	ansible-playbook -i inventory.yml autofs-reload.yml
+	sleep 2
+	ansible-playbook -i inventory.yml init-swarm-cluster.yml
+	sleep 2
+	ansible-playbook -i inventory.yml clowder.yml --tags=setup
+
 backup-clowder: clowder.yml
 	ansible-playbook -i inventory.yml clowder.yml --tags=backup
 
