@@ -44,7 +44,7 @@ pdfpreview_image: clowder/extractors-pdf-preview:latest
 videopreview_image: clowder/extractors-video-preview:latest
 hyperspydm3_image: uqrcc/dm3-extractor:1.0
 bioformat_extractor_image: uqrcc/bioformat-extractor:1.2
-pitschi_xapi_image: uqrcc/pitschi-xapi:1.8.4
+pitschi_xapi_image: uqrcc/pitschi-xapi:1.8.5
 pitschi_xapi_db_image: postgres:12.6
 wdf_image: uqrcc/wdf-extractor:latest
 pitschi_dashboard_image: uqrcc/pitschi-dashboard:0.13
@@ -55,3 +55,7 @@ ppms_storage_field: 'UQRDM Collection #'
 ppms_sync_mins: 1440  # daily
 ppms_starting_pid: 1
 ppms_default_securesocial: cilogon
+ppms_coreids: '[2,22]'
+
+### rdm
+rdm_cache_defaults: '{"its":0,"qbi":1}'
