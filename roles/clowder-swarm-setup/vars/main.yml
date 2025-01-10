@@ -7,7 +7,7 @@ mongo_image: mongo:3.6-xenial
 consul_image: consul:1.12.3
 traefik_image: traefik:2.8
 # clowder
-clowder_image: uqrcc/clowder:pitschi1.20.4
+clowder_image: uqrcc/clowder:pitschi1.20.5
 #clowder_image: uqrcc/clowder:rcc
 clowder_register: 'false'
 clowder_context: /
