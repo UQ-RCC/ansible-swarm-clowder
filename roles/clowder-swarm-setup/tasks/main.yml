@@ -15,6 +15,11 @@
       path: /mnt/mongo-data
       state: directory
       mode: '0755'
+  - name: mongo backup
+    file:
+      path: /mnt/mongo-backup
+      state: directory
+      mode: '0755'
   - name: config for mongo
     file:
       path: /mnt/mongo-configs
@@ -320,6 +325,7 @@
               volumes:
                 - /mnt/mongo-data:/data/db
                 - /mnt/mongo-configs:/data/configdb
+                - /mnt/mongo-backup:/mnt
               deploy:
                 mode: global
                 endpoint_mode: dnsrr       

@@ -17,14 +17,15 @@ fi
 
 ###
 today=$(date '+%d-%m-%Y')
-mkdir "/mnt/tmp/${today}"
 
 # TODO: mongo_mongo should not be hardcoded
-docker exec $(docker ps -q -f name=mongo_mongo) mongodump -o /mnt/ --uri="mongodb://mongo:27017/clowder?replicaSet=clowder"
-docker cp $(docker ps -q -f name=mongo_mongo):/mnt/clowder "/mnt/tmp/${today}"
-docker exec $(docker ps -q -f name=mongo_mongo) rm -rf /mnt/clowder
+master=$(docker exec $(docker ps -q -f name=mongo_mongo) mongo --quiet --eval 'rs.status().members.find(r=>r.state==1).name')
+rval=$? ; if [ $rval -ne 0 ] ; then echo replicaset status error: $rval ; exit $rval ; fi
+docker exec $(docker ps -q -f name=mongo_mongo) mongodump -o /mnt/ --uri="mongodb://${master}/clowder?replicaSet=clowder"
+rval=$? ; if [ $rval -ne 0 ] ; then echo mongodump error: $rval ; exit $rval ; fi
 
 tgz_file_name="mongo-{{ inventory_hostname }}.tar.gz"
-tar cvfz "/mnt/tmp/${today}/${tgz_file_name}" "/mnt/tmp/${today}/clowder"
-/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/mnt/tmp/${today}/${tgz_file_name}" --object-name "${today}/${tgz_file_name}"
-rm -rf "/mnt/tmp/${today}"
+tar cvfz "/mnt/mongo-backup/${tgz_file_name}" "/mnt/mongo-backup/clowder"
+rval=$? ; if [ $rval -ne 0 ] ; then echo tar error: $rval ; exit $rval ; fi
+/usr/bin/swift --os-auth-url {{ os_auth_url }} --auth-version {{ auth_version }} --os-username {{ os_username }} --os-password {{ os_password }} --os-project-id {{ os_project_id }} upload $backupcontainer "/mnt/mongo-backup/${tgz_file_name}" --object-name "${today}/${tgz_file_name}"
+rm -rf "/mnt/mongo-backup/clowder" "/mnt/mongo-backup/${tgz_file_name}"
