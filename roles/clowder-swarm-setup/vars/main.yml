@@ -55,7 +55,10 @@ ppms_storage_field: 'UQRDM Collection #'
 ppms_sync_mins: 1440  # daily
 ppms_starting_pid: 1
 ppms_default_securesocial: cilogon
-ppms_coreids: '[2,22]'
+ppms_coreids: '[2,18,22]'
+ppms_cores_action: Report2169
+ppms_userids_action: Report2110
+ppms_user_orgs_action: Report49
 
 ### rdm
 rdm_cache_defaults: '{"its":0,"qbi":1}'

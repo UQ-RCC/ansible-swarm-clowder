@@ -331,7 +331,7 @@
                 endpoint_mode: dnsrr       
                 resources:
                   limits:
-                    memory: 1G
+                    memory: 2G
                 placement:
                   constraints:
                     - node.role != manager
