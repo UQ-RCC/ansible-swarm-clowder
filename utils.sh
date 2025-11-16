@@ -1,23 +1,28 @@
 #!/bin/bash
 
+set -e
+
 env=dev
 master=0
 slave=0
+xxapi=0
 roles="master slave"
 update=0
 reboot=0
 uptime=0
 mount=0
-image_tag="uqrcc/clowder:pitschi1.20.6"
+#image_tag="uqrcc/clowder:pitschi1.20.6"
+image_tag="uqrcc/pitschi-xapi:1.9.3"
 image_tag_rm=0
-image_tar="../clowder/clowder_1_20_6.tar"
+#image_tar="../clowder/clowder_1_20_6.tar"
+image_tar="../pitschi-xapi/pitschi-xapi_1_9_3.tar"
 image_tar_load=0
 image_tar_cp=-1
 image_tar_rm=-1
 gfs_cmd=""
 
 usage() {
-  echo "usage: $0 [-p|--prod] [-m|--master-only] [-s|--slave-only]"
+  echo "usage: $0 [-p|--prod] [-m|--master-only] [-s|--slave-only] [-x|--xxapi]"
   echo "       [-u|--update] [-b|--reboot] [--uptime] [-d|--mount]"
   echo "       [-t|--image-tag <tag>] [-r|--image-tag-rm]"
   echo "       [-a|--image-tar <tar>] [-l|--load] [-o|--no-scp] [-p|--no-tar-rm]"
@@ -37,6 +42,11 @@ while [[ $# -gt 0 ]] ; do
       ;;
     -s|--slave-only)
       slave=1
+      shift
+      ;;
+    -x|--xxapi)
+      roles=xxapi
+      xxapi=1
       shift
       ;;
     -u|--update)
@@ -107,7 +117,7 @@ done
 
 if [ -n "${gfs_cmd}" ] ; then
   if [[ ${gfs_cmd} =~ (start|stop) ]] ; then
-    echo ${env}-slave0
+    echo "=== ${env}-slave0 ==="
     read -p "${gfs_cmd} ${env} gfs service (y/n)? " resp
     if [[ $resp =~ ^(y|Y) ]] ; then
       if [ "${gfs_cmd}" = "stop" ] ; then
@@ -117,7 +127,7 @@ if [ -n "${gfs_cmd}" ] ; then
       fi
     fi
   elif [ "${gfs_cmd}" = "status" ] ; then
-    echo ${env}-slave0
+    echo "=== ${env}-slave0 ==="
     ssh ${env}-slave0 sudo gluster volume ${gfs_cmd} gfs
   else
     echo "unknown gfs service command: ${gfs_cmd}"
@@ -128,8 +138,10 @@ fi
 
 if [ $master -eq 1 ] && [ $slave -eq 0 ] ; then
   roles="master"
+  xxapi=0
 elif [ $master -eq 0 ] && [ $slave -eq 1 ] ; then
   roles="slave"
+  xxapi=0
 fi
 
 if [ $image_tag_rm -eq 1 ] && [ $image_tar_rm -eq -1 ] ; then
@@ -147,34 +159,43 @@ fi
 if [ $mount -eq 1 ] ; then
   env=dev
   roles=slave
+  xxapi=0
 fi
 
 for role in ${roles} ; do
   for i in 0 1 2 ; do
-    echo ${env}-${role}${i}
+    if [ ${xxapi} -eq 1 ] ; then
+      if [ ${i} -eq 0 ] ; then
+        continue
+      fi
+      host=${role}${i}
+    else
+      host=${env}-${role}${i}
+    fi
+    echo "=== ${host} ==="
     if [ $update -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'sudo apt update && sudo apt full-upgrade -y'
+      ssh ${host} 'sudo apt update && sudo apt full-upgrade -y'
     fi
     if [ $reboot -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'sudo systemctl reboot'
+      ssh ${host} 'sudo systemctl reboot'
     fi
     if [ $uptime -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'uptime'
+      ssh ${host} 'uptime'
     fi
     if [ $mount -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'sudo ./mnt_data.sh'
+      ssh ${host} 'sudo ./mnt_data.sh'
     fi
     if [ $image_tar_rm -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'rm -v "'${image_tar##*/}'"'
+      ssh ${host} 'rm -v "'${image_tar##*/}'"'
     fi
     if [ $image_tag_rm -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'docker image rm "'${image_tag}'"'
+      ssh ${host} 'docker image rm "'${image_tag}'"'
     fi
     if [ $image_tar_cp -eq 1 ] ; then
-      scp ${image_tar} ${env}-${role}${i}:
+      scp ${image_tar} ${host}:
     fi
     if [ $image_tar_load -eq 1 ] ; then
-      ssh ${env}-${role}${i} 'docker load -i "'${image_tar##*/}'"'
+      ssh ${host} 'docker load -i "'${image_tar##*/}'"'
     fi
   done
 done

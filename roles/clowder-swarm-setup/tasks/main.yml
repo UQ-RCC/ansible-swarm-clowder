@@ -331,11 +331,11 @@
                 endpoint_mode: dnsrr       
                 resources:
                   limits:
-                    memory: 2G
+                    memory: 3G
                 placement:
                   constraints:
                     - node.role != manager
-              command: mongod --replSet clowder --port 27017 --noauth
+              command: mongod --replSet clowder --port 27017 --noauth --wiredTigerCacheSizeGB=1.5
           networks:
             clowder:
               external: true

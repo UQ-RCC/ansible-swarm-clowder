@@ -5,7 +5,7 @@
     host_key_checking: False
     pause_sec: 5
   tasks:
-  - name: docker system prune -f
+  - name: docker network prune -f
     docker_prune:
       builder_cache: yes
       containers: yes
