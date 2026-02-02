@@ -8,14 +8,15 @@ slave=0
 xxapi=0
 roles="master slave"
 update=0
+autorm=0
 reboot=0
 uptime=0
 mount=0
-#image_tag="uqrcc/clowder:pitschi1.20.6"
-image_tag="uqrcc/pitschi-xapi:1.9.3"
+image_tag="uqrcc/clowder:pitschi1.20.7"
+#image_tag="uqrcc/pitschi-xapi:1.9.4"
 image_tag_rm=0
-#image_tar="../clowder/clowder_1_20_6.tar"
-image_tar="../pitschi-xapi/pitschi-xapi_1_9_3.tar"
+image_tar="../clowder/clowder_1_20_7.tar"
+#image_tar="../pitschi-xapi/pitschi-xapi_1_9_4.tar"
 image_tar_load=0
 image_tar_cp=-1
 image_tar_rm=-1
@@ -23,7 +24,7 @@ gfs_cmd=""
 
 usage() {
   echo "usage: $0 [-p|--prod] [-m|--master-only] [-s|--slave-only] [-x|--xxapi]"
-  echo "       [-u|--update] [-b|--reboot] [--uptime] [-d|--mount]"
+  echo "       [-u|--update] [-v|--auto-remove] [-b|--reboot] [--uptime] [-d|--mount]"
   echo "       [-t|--image-tag <tag>] [-r|--image-tag-rm]"
   echo "       [-a|--image-tar <tar>] [-l|--load] [-o|--no-scp] [-p|--no-tar-rm]"
   echo "       [--gfs [stop|start|status]]"
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]] ; do
       ;;
     -u|--update)
       update=1
+      shift
+      ;;
+    -v|--auto-remove)
+      autorm=1
       shift
       ;;
     -b|--reboot)
@@ -176,6 +181,9 @@ for role in ${roles} ; do
     if [ $update -eq 1 ] ; then
       ssh ${host} 'sudo apt update && sudo apt full-upgrade -y'
     fi
+    if [ ${autorm} -eq 1 ] ; then
+      ssh ${host} 'sudo apt auto-remove -y'
+    fi
     if [ $reboot -eq 1 ] ; then
       ssh ${host} 'sudo systemctl reboot'
     fi
@@ -186,7 +194,7 @@ for role in ${roles} ; do
       ssh ${host} 'sudo ./mnt_data.sh'
     fi
     if [ $image_tar_rm -eq 1 ] ; then
-      ssh ${host} 'rm -v "'${image_tar##*/}'"'
+      ssh ${host} 'rm -fv "'${image_tar##*/}'"'
     fi
     if [ $image_tag_rm -eq 1 ] ; then
       ssh ${host} 'docker image rm "'${image_tag}'"'
