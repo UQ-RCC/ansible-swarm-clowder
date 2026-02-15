@@ -80,19 +80,19 @@ gfs volume status should show 3 bricks and 3 daemons online
 
 1. remove xapi stack on xxapi1 and xxapi2
 
-   * **docker service ls**
-   * **docker stack rm xapi**
-   * **docker service ls**
-   * **docker ps**
+   * **make xxapi-destroy**
 
    optional
 
+   * **docker service ls**
+   * **docker stack rm xapi**
+   * **docker ps**
    * **docker system prune -f**
    * **docker network create clowder --driver overlay --scope swarm**
 
 2. deploy from github/ansible-swarm-clowder
 
-   * **ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml**
+   * **make xxapi-deploy**
 
 ## Delete stack
 
@@ -167,7 +167,21 @@ inventory.yml and secrets.yml)
 
    * **make deploy-clowder**
 
-# Node reboots
+# Node apt-updates and reboots
 
-Remove app, swarm cluster, then stop gfs volume on worker/slave nodes. After
-reboot, start gfs volume on worker nodes, then build swarm and deploy app. 
+Remove app, swarm cluster, then stop gfs volume
+
+   * **make gfs-stop**
+   * **make gfs-status**
+   * **make apt-update**
+   * **make reboot**
+   * **mark uptime**
+   * **make gfs-start**
+   * **make gfs-status**
+
+Then build swarm and deploy app
+
+For xxapi apt-update and reboot
+
+   * **make xxapi-apt-update**
+   * **make xxapi-reboot**

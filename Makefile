@@ -94,4 +94,45 @@ monitor: clowder.yml
 
 upgrade: upgrade.yml
 	ansible-playbook -i inventory.yml upgrade.yml
-.PHONY: check-vars clean stack inventories bootstrap inventory.yml init-swarm
+
+apt-update:
+	ansible all -i inventory.yml -m apt -a "upgrade=yes update_cache=yes autoremove=yes" --become
+
+reboot:
+	ansible all -i inventory.yml -m reboot --become
+
+uptime:
+	ansible all -i inventory.yml -m command -a "uptime"
+
+gfs-status:
+	ansible "~(.*-slave0)" -i inventory.yml -m command -a "gluster volume status gfs" --become
+
+gfs-stop: check-cmd
+	ansible "~(.*-slave0)" -i inventory.yml -m command -a "gluster --mode=script volume stop gfs" --become
+
+gfs-start:
+	ansible "~(.*-slave0)" -i inventory.yml -m command -a "gluster volume start gfs" --become
+
+mount:
+	ansible "~(.*-slave[0-2])" -i inventory.yml -m command -a "./mnt_data.sh" --become
+
+xxapi-destroy:
+	ansible all -i ../pitschi-secrets/xxapi_inventory.yml -m community.docker.docker_stack -a "name=xapi state=absent"
+
+xxapi-deploy:
+	ansible-playbook -i ../pitschi-secrets/xxapi_inventory.yml xxapi.yml
+
+xxapi-apt-update:
+	ansible all -i ../pitschi-secrets/xxapi_inventory.yml -m apt -a "upgrade=yes update_cache=yes autoremove=yes" --become
+
+xxapi-reboot:
+	ansible all -i ../pitschi-secrets/xxapi_inventory.yml -m reboot --become
+
+xxapi-uptime:
+	ansible all -i ../pitschi-secrets/xxapi_inventory.yml -m command -a "uptime"
+
+check-cmd:
+	@echo $(MAKECMDGOALS) for $(shell readlink inventory.yml |sed -n "s/^.*inventory-\(.*\)\.yml$$/\1/p")
+	@echo -n "are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+.PHONY: check-vars clean stack inventories bootstrap inventory.yml init-swarm check-cmd
