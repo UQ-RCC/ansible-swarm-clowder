@@ -517,6 +517,9 @@
                 - /mnt/clowder/extra:/home/clowder/extra
               deploy:
                 mode: global
+                resources:
+                  limits:
+                    memory: 3G
                 restart_policy:
                   condition: on-failure
                 placement:
