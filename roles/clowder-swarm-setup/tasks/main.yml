@@ -331,11 +331,11 @@
                 endpoint_mode: dnsrr       
                 resources:
                   limits:
-                    memory: 3G
+                    memory: 4G
                 placement:
                   constraints:
                     - node.role != manager
-              command: mongod --replSet clowder --port 27017 --noauth --wiredTigerCacheSizeGB=1.5
+              command: mongod --replSet clowder --port 27017 --noauth --wiredTigerCacheSizeGB=2.5
           networks:
             clowder:
               external: true
@@ -519,7 +519,7 @@
                 mode: global
                 resources:
                   limits:
-                    memory: 3G
+                    memory: 4G
                 restart_policy:
                   condition: on-failure
                 placement:
