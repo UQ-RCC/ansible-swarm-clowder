@@ -306,7 +306,7 @@
                   constraints:
                     - node.role != manager
               # for somereasons, environment varibles not passed on to elsaticearch
-              command: elasticsearch -Des.cluster.name=clowder -Dnetwork.host=0.0.0.0 -Des.discovery.zen.ping.multicast.enabled=false -Des.discovery.zen.ping.unicast.hosts=escluster -Des.gateway.expected_nodes=3 -Des.discovery.zen.minimum_master_nodes=2 -Des.gateway.recover_after_nodes=2 -Des.network.bind=_eth0:ipv4_ 
+              command: elasticsearch -Des.cluster.name=clowder -Dnetwork.host=0.0.0.0 -Des.discovery.zen.ping.multicast.enabled=false -Des.discovery.zen.ping.unicast.hosts=escluster -Des.gateway.expected_nodes=3 -Des.discovery.zen.minimum_master_nodes=2 -Des.gateway.recover_after_nodes=2 -Des.network.bind=_eth0:ipv4_ -Dcluster.routing.allocation.disk.watermark.low=0.96 -Dcluster.routing.allocation.disk.watermark.high=0.98
           networks:
             clowder:
               external: true
