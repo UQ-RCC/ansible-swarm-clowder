@@ -296,12 +296,14 @@
               volumes:
                 - /mnt/es-data:/usr/share/elasticsearch/data
                 - /mnt/es-logs:/usr/share/elasticsearch/logs
+              environment:
+                - ES_JAVA_OPTS=-Xms256m -Xmx2g
               deploy:
                 mode: global
                 endpoint_mode: dnsrr       
                 resources:
                   limits:
-                    memory: 2G
+                    memory: 4G
                 placement:
                   constraints:
                     - node.role != manager
@@ -515,11 +517,13 @@
                 - /mnt/clowder/clowder.sh:/home/clowder/clowder.sh
                 - /mnt/clowder/resolv.conf:/etc/resolv.conf
                 - /mnt/clowder/extra:/home/clowder/extra
+              environment:
+                - JAVA_OPTS=-Xms1024m -Xmx3072m
               deploy:
                 mode: global
                 resources:
                   limits:
-                    memory: 4G
+                    memory: 5G
                 restart_policy:
                   condition: on-failure
                 placement:
