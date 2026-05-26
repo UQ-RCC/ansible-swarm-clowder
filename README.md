@@ -113,6 +113,11 @@ inventory.yml and secrets.yml)
 
   * **make setenv-dev**
 
+  To do Clowder ingest testing in dev, the test collections also need to be
+  mounted
+
+  * **make mount**
+
 ## App redeploy only
 
 1. Remove app

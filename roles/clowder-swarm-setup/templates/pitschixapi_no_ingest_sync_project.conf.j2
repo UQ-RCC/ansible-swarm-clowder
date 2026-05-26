@@ -41,6 +41,7 @@ cache_defaults={{ rdm_cache_defaults }}
 [clowder]
 url=https://{{ clowder_host }}
 api_url=https://{{ clowder_host }}/api
+api_url_local=http://{{ clowder_local }}/api
 api_key={{ clowder_admin_key }}
 ingesting=no
 ingest_frequency=30
@@ -64,3 +65,33 @@ encrypted_key={{ xapi_encrypted_key }}
 encrypted_creds={{ xapi_encrypted_creds }}
 encrypted_clowder_key={{ xapi_encrypted_clowder_key }}
 encrypted_ppms_creds={{ xapi_encrypted_ppms_creds }}
+
+[templates]
+import = <p>Dear {user_name},</p>
+    <p>Pitschi has successfully imported your dataset "<b>{dataset_name}</b>" from <b>{system_name}</b> into the UQRDM collection <b>{collection}</b> for project "<b>{project_name}</b>".</p>
+    <p><b>Your data is now accessible in UQRDM</b>.</p>
+    <p><u><b>Accessing Your Data:</b></u></p>
+    <p>The preferred method of accessing your data in UQRDM is via a mapped drive for computers across all UQ sites:</p>
+    <ul><li><b>Windows</b>: <code>{rdm_mnt_win}</code></li>
+    <li><b>Mac</b>: <code>{rdm_mnt_smb}</code></li></ul>
+    <p>If you are not on UQ campus, you will need to establish a <a href="https://my.uq.edu.au/information-and-services/information-technology/working-remotely/vpn-virtual-private-network">VPN connection to UQ </a> to access UQRDM data through a mapped drive. For any access issues, please consult the <a href="https://guides.library.uq.edu.au/research-and-teaching-staff/uq-research-data-manager/access-use-storage">UQRDM Library Guides</a>.</p>
+    <p><u><b>Alternative Access Method:</b></u></p>
+    <p>You can also access and share your data via <a href="https://cloud.rdm.uq.edu.au/index.php/apps/files/?dir=/{collection}/{dataset_pth_smb}">CloudRDM</a>.
+    <b>Note</b> there may be delays in files to first appear in the cloud. If your files are not available in CloudRDM within 24 hours, please contact <a href="mailto:help@its.uq.edu.au">ITS Support</a>.</p>
+    <p><b>PITSCHI portal</b>:You will receive a second email notification once your dataset has been successfully uploaded into PITSCHI portal.</p>
+    <p>Regards,<br/>Pitschi Team</p>
+    <p>PS: <b>If you happen to present or publish this dataset</b>, please add the following text under the acknowledgment section of your manuscript:<br/>
+    <i>This dataset was captured by <b>{user_name}</b> (https://orcid.org/{user_orcid}) using the instrument <b>{system_name}</b> ({system_pid}) at the <b>{core_name}</b> ({core_rorid}). The authors acknowledge the facilities, and the scientific and technical assistance, of the Microscopy Australia Facility at the Centre for Microscopy and Microanalysis (CMM), The University of Queensland.</i></p>
+ingest = <p>Dear {user_name},</p>
+    <p>Pitschi has successfully ingested your dataset <b>{dataset_name}</b> from <b>{system_name}</b> into PITSCHI portal for project "<b>{project_name}</b>".</p>
+    <p><b>Your data is now accessible for viewing or sharing via the <a href="{clowder_url}/datasets/{clowder_dataset}?space={clowder_space}">PITSCHI portal</a></b>.</p>
+    <p><u><b>Accessing Your Data:</b></u></p>
+    <p>The preferred method of accessing your data in UQRDM is via a mapped drive for computers across all UQ sites:</p>
+    <ul><li><b>Windows</b>: <code>{rdm_mnt_win}</code></li>
+    <li><b>Mac</b>: <code>{rdm_mnt_smb}</code></li></ul>
+    <p>If you are not on UQ campus, you will need to establish a <a href="https://my.uq.edu.au/information-and-services/information-technology/working-remotely/vpn-virtual-private-network">VPN connection to UQ </a> to access UQRDM data through a mapped drive. For any access issues, please consult the <a href="https://guides.library.uq.edu.au/research-and-teaching-staff/uq-research-data-manager/access-use-storage">UQRDM Library Guides</a>.</p>
+    <p><u><b>Alternative Access Method:</b></u></p>
+    <p>You can also access and share your data via <a href="https://cloud.rdm.uq.edu.au/index.php/apps/files/?dir=/{collection}/{dataset_pth_smb}">CloudRDM</a>.
+    <b>Note</b> there may be delays in files to first appear in the cloud. If your files are not available in CloudRDM within 24 hours, please contact <a href="mailto:help@its.uq.edu.au">ITS Support</a>.</p>
+    <p>PS: <b>If you happen to present or publish this dataset</b>, please add the following text under the acknowledgment section of your manuscript:<br/>
+    <i>This dataset was captured by <b>{user_name}</b> (https://orcid.org/{user_orcid}) using the instrument <b>{system_name}</b> ({system_pid}) at the <b>{core_name}</b> ({core_rorid}). The authors acknowledge the facilities, and the scientific and technical assistance, of the Microscopy Australia Facility at the Centre for Microscopy and Microanalysis (CMM), The University of Queensland.</i></p>
