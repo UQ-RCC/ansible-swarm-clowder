@@ -66,6 +66,14 @@ encrypted_creds={{ xapi_encrypted_creds }}
 encrypted_clowder_key={{ xapi_encrypted_clowder_key }}
 encrypted_ppms_creds={{ xapi_encrypted_ppms_creds }}
 
+[creds.cmm]
+encrypted_key={{ xapi_cmm_encrypted_key }}
+encrypted_creds={{ xapi_cmm_encrypted_creds }}
+
+[creds.anff]
+encrypted_key={{ xapi_anff_encrypted_key }}
+encrypted_creds={{ xapi_anff_encrypted_creds }}
+
 [templates]
 import = <p>Dear {user_name},</p>
     <p>Pitschi has successfully imported your dataset "<b>{dataset_name}</b>" from <b>{system_name}</b> into the UQRDM collection <b>{collection}</b> for project "<b>{project_name}</b>".</p>
